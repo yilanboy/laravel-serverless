@@ -1,3 +1,8 @@
+variable "app_name" {
+  type = string
+}
+
+# provider settings
 variable "tag_service" {
   description = "Service name"
   type        = string
@@ -11,10 +16,6 @@ variable "tag_environment" {
 variable "tag_owner" {
   description = "Owner name"
   type        = string
-}
-
-variable "app_name" {
-  type = string
 }
 
 # lambda settings
@@ -41,7 +42,7 @@ variable "console_lambda_layer_arn" {
   default = "arn:aws:lambda:us-west-2:534081306603:layer:console:90"
 }
 
-# Laravel settings
+# laravel settings
 variable "app_key" {
   type = string
 }
@@ -106,7 +107,7 @@ variable "algolia_secret" {
   type = string
 }
 
-# Api gateway
+# api gateway settings
 variable "certificate_arn" {
   type = string
 }
