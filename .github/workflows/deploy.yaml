@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  toggle-maintenance-mode:
+  deploy-laravel-to-lambda:
     name: Deploy my laravel app to aws lambda
     runs-on: ubuntu-latest
     steps:
