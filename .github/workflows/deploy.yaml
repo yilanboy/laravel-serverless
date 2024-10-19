@@ -30,18 +30,6 @@ jobs:
         with:
           php-version: "8.3"
 
-      - name: Install composer dependencies
-        run: |
-          composer install --prefer-dist --optimize-autoloader --no-dev
-          php artisan optimize
-          php artisan config:clear
-
-      - name: Generate front-end assets
-        run: |
-          npm install
-          npm run build
-          aws s3 sync public "s3://${{ env.ASSET_AWS_BUCKET }}"
-
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v3
 
@@ -50,6 +38,16 @@ jobs:
           git clone "${{ env.LARAVEL_APP_GITHUB_URL }}" laravel-app
 
           cd laravel-app
+
+          # install composer dependencies
+          composer install --prefer-dist --optimize-autoloader --no-dev
+          php artisan optimize
+          php artisan config:clear
+
+          # generate front-end assets
+          npm install
+          npm run build
+          aws s3 sync public "s3://${{ env.ASSET_AWS_BUCKET }}"
 
           # enable bref pgsql extension in lambda
           # https://bref.sh/docs/environment/php#extensions-installed-but-disabled-by-default
