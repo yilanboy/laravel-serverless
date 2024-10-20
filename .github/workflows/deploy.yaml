@@ -47,7 +47,6 @@ jobs:
           # generate front-end assets
           npm install
           npm run build
-          aws s3 sync public "s3://${{ vars.ASSET_AWS_BUCKET }}"
 
           # enable bref pgsql extension in lambda
           # https://bref.sh/docs/environment/php#extensions-installed-but-disabled-by-default
@@ -93,3 +92,6 @@ jobs:
             -var="custom_domain_name=${{ vars.CUSTOM_DOMAIN_NAME }}" \
             -var="filename=./laravel-app.zip" \
             -auto-approve
+
+          # sync front-end assets to s3 bucket
+          aws s3 sync laravel-app/public "s3://${{ vars.ASSET_AWS_BUCKET }}"
