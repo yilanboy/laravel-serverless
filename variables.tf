@@ -44,7 +44,8 @@ variable "console_lambda_layer_arn" {
 
 # laravel settings
 variable "app_key" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "app_url" {
@@ -75,6 +76,11 @@ variable "database_password" {
   type = string
 }
 
+variable "database_sslmode" {
+  type    = string
+  default = "require"
+}
+
 variable "aws_bucket" {
   type = string
 }
@@ -88,11 +94,13 @@ variable "captcha_site_key" {
 }
 
 variable "captcha_secret_key" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "mail_password" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "scout_prefix" {
@@ -104,7 +112,8 @@ variable "algolia_app_id" {
 }
 
 variable "algolia_secret" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 # api gateway settings

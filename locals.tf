@@ -15,6 +15,7 @@ locals {
     DB_DATABASE                 = var.database_name
     DB_USERNAME                 = var.database_username
     DB_PASSWORD                 = var.database_password
+    DB_SSLMODE                  = var.database_sslmode
     CACHE_STORE                 = "dynamodb"
     DYNAMODB_CACHE_TABLE        = aws_dynamodb_table.cache_table.name
     SESSION_DRIVER              = "dynamodb"
