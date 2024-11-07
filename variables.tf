@@ -33,13 +33,13 @@ variable "lambda_runtime" {
 variable "php_lambda_layer_arn" {
   type = string
   # check all php layer runtime in this page
-  # https://runtimes.bref.sh/?region=us-west-2&version=2.3.8
-  default = "arn:aws:lambda:us-west-2:534081306603:layer:arm-php-83:37"
+  # https://runtimes.bref.sh/?region=us-west-2&version=2.3.9
+  default = "arn:aws:lambda:us-west-2:534081306603:layer:arm-php-83:38"
 }
 
 variable "console_lambda_layer_arn" {
   type    = string
-  default = "arn:aws:lambda:us-west-2:534081306603:layer:console:90"
+  default = "arn:aws:lambda:us-west-2:534081306603:layer:console:91"
 }
 
 # laravel settings
