@@ -12,7 +12,7 @@ This project use [cf2tf](https://github.com/DontShaveTheYak/cf2tf) to convert th
 
 > I prefer Terraform to Serverless.
 
-## Packaged Your Laravel Application Before Deploying
+## Packaged Your Laravel Application Before Deployment
 
 Before upload your Laravel application, you need to install dependencies and remove unnecessary files (like `.git` or `node_modules`).
 
@@ -42,7 +42,7 @@ Then you can upload `laravel-app.zip` to AWS Lambda.
 ## Lambda Can't Store Static Assets
 
 If you have static assets, like javascript files or css files.
-You should upload this files to AWS S3 after you bundled them.
+You should upload these files to AWS S3 after you bundled them.
 
 ```bash
 cd laravel-app
