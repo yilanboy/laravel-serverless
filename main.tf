@@ -185,7 +185,8 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
 }
 
 resource "aws_cloudwatch_event_rule" "artisan_events_rule_schedule" {
-  schedule_expression = "rate(1 hour)"
+  name                = "${var.app_name}-artisan-schedule-runner"
+  schedule_expression = "rate(1 day)"
   state               = "ENABLED"
 }
 
