@@ -1,3 +1,6 @@
+####################
+# CloudWatch
+####################
 resource "aws_cloudwatch_log_group" "web_log_group" {
   name              = "/aws/lambda/${var.app_name}-web"
   retention_in_days = 1
@@ -13,6 +16,22 @@ resource "aws_cloudwatch_log_group" "jobs_worker_log_group" {
   retention_in_days = 1
 }
 
+resource "aws_cloudwatch_event_rule" "artisan_events_rule_schedule" {
+  name                = "${var.app_name}-artisan-schedule-runner"
+  schedule_expression = "rate(1 day)"
+  state               = "ENABLED"
+}
+
+resource "aws_cloudwatch_event_target" "artisan_schedule" {
+  target_id = "artisan-schedule"
+  rule      = aws_cloudwatch_event_rule.artisan_events_rule_schedule.name
+  arn       = aws_lambda_function.artisan_lambda_function.arn
+  input     = "\"schedule:run\""
+}
+
+####################
+# IAM
+####################
 resource "aws_iam_role" "lambda_execution" {
   name = "${var.app_name}-lambda-role"
 
@@ -127,6 +146,9 @@ resource "aws_iam_role_policy_attachment" "lambda_execution" {
   policy_arn = aws_iam_policy.lambda_execution.arn
 }
 
+####################
+# Lambda
+####################
 resource "aws_lambda_function" "web_lambda_function" {
   filename         = var.filename
   source_code_hash = filesha256(var.filename)
@@ -184,19 +206,6 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
   }
 }
 
-resource "aws_cloudwatch_event_rule" "artisan_events_rule_schedule" {
-  name                = "${var.app_name}-artisan-schedule-runner"
-  schedule_expression = "rate(1 day)"
-  state               = "ENABLED"
-}
-
-resource "aws_cloudwatch_event_target" "artisan_schedule" {
-  target_id = "artisan-schedule"
-  rule      = aws_cloudwatch_event_rule.artisan_events_rule_schedule.name
-  arn       = aws_lambda_function.artisan_lambda_function.arn
-  input     = "\"schedule:run\""
-}
-
 resource "aws_lambda_permission" "artisan_lambda_permission_events_rule_schedule" {
   function_name = aws_lambda_function.artisan_lambda_function.function_name
   action        = "lambda:InvokeFunction"
@@ -216,6 +225,9 @@ resource "aws_lambda_event_source_mapping" "jobs_worker_event_source_mapping_sqs
   ]
 }
 
+####################
+# SQS
+####################
 resource "random_string" "random" {
   length  = 6
   special = false
@@ -235,6 +247,9 @@ resource "aws_sqs_queue" "jobs_dlq" {
   name                      = "${var.app_name}-jobs-dlq-${random_string.random.result}"
 }
 
+####################
+# DynamoDB
+####################
 resource "aws_dynamodb_table" "cache_table" {
   name         = "${var.app_name}-cache-table-${random_string.random.result}"
   billing_mode = "PAY_PER_REQUEST"
@@ -251,6 +266,9 @@ resource "aws_dynamodb_table" "cache_table" {
   }
 }
 
+####################
+# API Gateway
+####################
 resource "aws_apigatewayv2_api" "http_api" {
   name                         = var.app_name
   protocol_type                = "HTTP"
@@ -269,15 +287,20 @@ resource "aws_apigatewayv2_stage" "http_api_stage" {
   }
 }
 
-resource "aws_api_gateway_domain_name" "custom_domain" {
-  domain_name              = var.custom_domain_name
-  regional_certificate_arn = var.certificate_arn
+resource "aws_apigatewayv2_domain_name" "custom_domain" {
+  domain_name = var.custom_domain_name
+
+  domain_name_configuration {
+    certificate_arn = var.certificate_arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
 }
 
-resource "aws_api_gateway_base_path_mapping" "custom_domain_mapping" {
-  domain_name = aws_api_gateway_domain_name.custom_domain.domain_name
+resource "aws_apigatewayv2_api_mapping" "custom_domain_mapping" {
   api_id      = aws_apigatewayv2_api.http_api.id
-  stage_name  = aws_apigatewayv2_stage.http_api_stage.name
+  domain_name = aws_apigatewayv2_domain_name.custom_domain.id
+  stage       = aws_apigatewayv2_stage.http_api_stage.id
 }
 
 resource "aws_lambda_permission" "web_lambda_permission_http_api" {
@@ -300,6 +323,3 @@ resource "aws_apigatewayv2_route" "http_api_route_default" {
   route_key = "$default"
   target    = join("/", ["integrations", aws_apigatewayv2_integration.http_api_integration_web.id])
 }
-
-
-
