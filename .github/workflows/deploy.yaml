@@ -68,6 +68,11 @@ jobs:
           # deploy
           terraform init
           terraform apply \
+            -var="enable_vpc=true" \
+            -var='subnet_ids=${{ secrets.SUBNET_IDS }}' \
+            -var='security_group_ids=${{ secrets.SECURITY_GROUP_IDS }}' \
+            -var="enable_filesystem=true" \
+            -var="access_point_arn=${{ secrets.ACCESS_POINT_ARN }}" \
             -var="app_name=${{ vars.APP_NAME }}" \
             -var="tag_service=${{ vars.TAG_SERVICE }}" \
             -var="tag_environment=${{ vars.TAG_ENVIRONMENT }}" \
@@ -75,11 +80,6 @@ jobs:
             -var="app_key=${{ secrets.APP_KEY }}" \
             -var="app_url=${{ vars.APP_URL }}" \
             -var="asset_url=${{ vars.ASSET_URL }}" \
-            -var="database_host=${{ secrets.DATABASE_HOST }}" \
-            -var="database_port=${{ secrets.DATABASE_PORT }}" \
-            -var="database_name=${{ secrets.DATABASE_NAME }}" \
-            -var="database_username=${{ secrets.DATABASE_USERNAME }}" \
-            -var="database_password=${{ secrets.DATABASE_PASSWORD }}" \
             -var="aws_bucket=${{ vars.AWS_BUCKET }}" \
             -var="aws_url=${{ vars.AWS_URL }}" \
             -var="captcha_site_key=${{ secrets.CAPTCHA_SITE_KEY }}" \

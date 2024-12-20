@@ -2,7 +2,9 @@ variable "app_name" {
   type = string
 }
 
+#
 # provider settings
+#
 variable "tag_service" {
   description = "Service name"
   type        = string
@@ -18,7 +20,9 @@ variable "tag_owner" {
   type        = string
 }
 
+#
 # lambda settings
+#
 variable "filename" {
   type    = string
   default = "./laravel-app.zip"
@@ -42,7 +46,31 @@ variable "console_lambda_layer_arn" {
   default = "arn:aws:lambda:us-west-2:534081306603:layer:console:94"
 }
 
+variable "enable_vpc" {
+  type    = bool
+  default = false
+}
+
+variable "subnet_ids" {
+  type = list(string)
+}
+
+variable "security_group_ids" {
+  type = list(string)
+}
+
+variable "enable_filesystem" {
+  type    = bool
+  default = false
+}
+
+variable "access_point_arn" {
+  type = string
+}
+
+#
 # laravel settings
+#
 variable "app_key" {
   type      = string
   sensitive = true
@@ -56,24 +84,38 @@ variable "asset_url" {
   type = string
 }
 
+variable "database_connection" {
+  type    = string
+  default = "sqlite"
+}
+
 variable "database_host" {
-  type = string
+  type     = string
+  default  = null
+  nullable = true
 }
 
 variable "database_port" {
-  type = number
+  type     = number
+  default  = null
+  nullable = true
 }
 
 variable "database_name" {
-  type = string
+  type    = string
+  default = "/mnt/efs/db/database.sqlite"
 }
 
 variable "database_username" {
-  type = string
+  type     = string
+  default  = null
+  nullable = true
 }
 
 variable "database_password" {
-  type = string
+  type     = string
+  default  = null
+  nullable = true
 }
 
 variable "database_sslmode" {
@@ -116,7 +158,9 @@ variable "algolia_secret" {
   sensitive = true
 }
 
+#
 # api gateway settings
+#
 variable "certificate_arn" {
   type = string
 }

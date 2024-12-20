@@ -9,7 +9,7 @@ locals {
     APP_TIMEZONE                = "Asia/Taipei"
     APP_LOCALE                  = "zh_TW"
     ASSET_URL                   = var.asset_url
-    DB_CONNECTION               = "pgsql"
+    DB_CONNECTION               = var.database_connection
     DB_HOST                     = var.database_host
     DB_PORT                     = var.database_port
     DB_DATABASE                 = var.database_name

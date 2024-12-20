@@ -1,6 +1,6 @@
-####################
+#
 # CloudWatch
-####################
+#
 resource "aws_cloudwatch_log_group" "web_log_group" {
   name              = "/aws/lambda/${var.app_name}-web"
   retention_in_days = 1
@@ -29,9 +29,9 @@ resource "aws_cloudwatch_event_target" "artisan_schedule" {
   input     = "\"schedule:run\""
 }
 
-####################
+#
 # IAM
-####################
+#
 resource "aws_iam_role" "lambda_execution" {
   name = "${var.app_name}-lambda-role"
 
@@ -136,6 +136,21 @@ resource "aws_iam_policy" "lambda_execution" {
         ]
         Resource = aws_sqs_queue.jobs_queue.arn
         Effect   = "Allow"
+      },
+      {
+        Action = [
+          "ec2:CreateNetworkInterface",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeSubnets",
+          "ec2:DeleteNetworkInterface",
+          "ec2:AssignPrivateIpAddresses",
+          "ec2:UnassignPrivateIpAddresses",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs"
+        ]
+        Resource = "*"
+        Effect   = "Allow"
       }
     ]
   })
@@ -146,9 +161,9 @@ resource "aws_iam_role_policy_attachment" "lambda_execution" {
   policy_arn = aws_iam_policy.lambda_execution.arn
 }
 
-####################
+#
 # Lambda
-####################
+#
 resource "aws_lambda_function" "web_lambda_function" {
   filename         = var.filename
   source_code_hash = filesha256(var.filename)
@@ -166,6 +181,23 @@ resource "aws_lambda_function" "web_lambda_function" {
       BREF_LOOP_MAX                    = "250"
       OCTANE_PERSIST_DATABASE_SESSIONS = "1"
     })
+  }
+
+  dynamic "vpc_config" {
+    for_each = var.enable_vpc ? ["apply"] : []
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = var.security_group_ids
+    }
+  }
+
+  dynamic "file_system_config" {
+    for_each = var.enable_filesystem ? ["apply"] : []
+
+    content {
+      arn              = var.access_point_arn
+      local_mount_path = "/mnt/efs"
+    }
   }
 }
 
@@ -187,6 +219,24 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   environment {
     variables = local.lambda_function_environment_variables
   }
+
+  dynamic "vpc_config" {
+    for_each = var.enable_vpc ? ["apply"] : []
+
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = var.security_group_ids
+    }
+  }
+
+  dynamic "file_system_config" {
+    for_each = var.enable_filesystem ? ["apply"] : []
+
+    content {
+      arn              = var.access_point_arn
+      local_mount_path = "/mnt/efs"
+    }
+  }
 }
 
 resource "aws_lambda_function" "jobs_worker_lambda_function" {
@@ -203,6 +253,24 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
 
   environment {
     variables = local.lambda_function_environment_variables
+  }
+
+  dynamic "vpc_config" {
+    for_each = var.enable_vpc ? ["apply"] : []
+
+    content {
+      subnet_ids         = var.subnet_ids
+      security_group_ids = var.security_group_ids
+    }
+  }
+
+  dynamic "file_system_config" {
+    for_each = var.enable_filesystem ? ["apply"] : []
+
+    content {
+      arn              = var.access_point_arn
+      local_mount_path = "/mnt/efs"
+    }
   }
 }
 
@@ -225,9 +293,9 @@ resource "aws_lambda_event_source_mapping" "jobs_worker_event_source_mapping_sqs
   ]
 }
 
-####################
+#
 # SQS
-####################
+#
 resource "random_string" "random" {
   length  = 6
   special = false
@@ -247,9 +315,9 @@ resource "aws_sqs_queue" "jobs_dlq" {
   name                      = "${var.app_name}-jobs-dlq-${random_string.random.result}"
 }
 
-####################
+#
 # DynamoDB
-####################
+#
 resource "aws_dynamodb_table" "cache_table" {
   name         = "${var.app_name}-cache-table-${random_string.random.result}"
   billing_mode = "PAY_PER_REQUEST"
@@ -266,9 +334,9 @@ resource "aws_dynamodb_table" "cache_table" {
   }
 }
 
-####################
+#
 # API Gateway
-####################
+#
 resource "aws_apigatewayv2_api" "http_api" {
   name                         = var.app_name
   protocol_type                = "HTTP"
