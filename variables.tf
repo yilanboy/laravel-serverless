@@ -38,12 +38,12 @@ variable "php_lambda_layer_arn" {
   type = string
   # check all php layer runtime in this page
   # https://runtimes.bref.sh/?region=us-west-2
-  default = "arn:aws:lambda:us-west-2:534081306603:layer:arm-php-84:13"
+  default = "arn:aws:lambda:us-west-2:534081306603:layer:arm-php-84:14"
 }
 
 variable "console_lambda_layer_arn" {
   type    = string
-  default = "arn:aws:lambda:us-west-2:534081306603:layer:console:94"
+  default = "arn:aws:lambda:us-west-2:534081306603:layer:console:95"
 }
 
 variable "enable_vpc" {
