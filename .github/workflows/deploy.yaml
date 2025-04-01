@@ -55,10 +55,16 @@ jobs:
 
           # remove unnecessary files
           rm -rf node_modules
+          rm -rf public/storage
+          rm -rf resources/assets
+          rm -rf resources/css
+          rm -rf resources/images
+          rm -rf resources/js
+          rm -rf resources/ts
+          rm -rf storage
           rm -rf tests
           rm -rf .git
           rm -rf .github
-          rm -rf storage
 
           # zip the laravel app
           zip -r "../laravel-app.zip" .
