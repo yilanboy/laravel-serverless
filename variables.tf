@@ -158,6 +158,11 @@ variable "algolia_secret" {
   sensitive = true
 }
 
+variable "purifier_cache_path" {
+  type    = string
+  default = "/mnt/efs/cache"
+}
+
 #
 # api gateway settings
 #
