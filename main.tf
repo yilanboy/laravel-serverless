@@ -381,7 +381,7 @@ resource "aws_lambda_permission" "web_lambda_permission_http_api" {
 resource "aws_apigatewayv2_integration" "http_api_integration_web" {
   api_id                 = aws_apigatewayv2_api.http_api.id
   integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.web_lambda_function.arn
+  integration_uri        = aws_lambda_function.web_lambda_function.invoke_arn
   payload_format_version = "2.0"
   timeout_milliseconds   = 30000
 }
