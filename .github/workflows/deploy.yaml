@@ -48,10 +48,10 @@ jobs:
           npm install
           npm run build
 
-          # enable bref pgsql extension in lambda
+          # enable bref pgsql extension in lambda if you need it
           # https://bref.sh/docs/environment/php#extensions-installed-but-disabled-by-default
-          mkdir -p php/conf.d
-          echo "extension=pdo_pgsql" > php/conf.d/pgsql.ini
+          # mkdir -p php/conf.d
+          # echo "extension=pdo_pgsql" > php/conf.d/pgsql.ini
 
           # remove unnecessary files
           rm -rf node_modules
