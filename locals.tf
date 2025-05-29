@@ -39,6 +39,5 @@ locals {
     SCOUT_PREFIX                = var.scout_prefix
     ALGOLIA_APP_ID              = var.algolia_app_id
     ALGOLIA_SECRET              = var.algolia_secret
-    PURIFIER_CACHE_PATH         = var.purifier_cache_path
   }
 }
