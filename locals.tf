@@ -33,7 +33,6 @@ locals {
     MAIL_PORT                   = var.mail_port
     MAIL_USERNAME               = var.mail_username
     MAIL_PASSWORD               = var.mail_password
-    MAIL_ENCRYPTION             = var.mail_encryption
     MAIL_FROM_ADDRESS           = var.mail_from_address
     MAIL_FROM_NAME              = var.app_name
     SCOUT_PREFIX                = var.scout_prefix

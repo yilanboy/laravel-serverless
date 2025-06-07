@@ -226,11 +226,6 @@ variable "mail_password" {
   sensitive = true
 }
 
-variable "mail_encryption" {
-  type    = string
-  default = "tls"
-}
-
 variable "mail_from_address" {
   type = string
 }
