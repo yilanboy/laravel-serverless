@@ -2,22 +2,22 @@
 # CloudWatch
 #
 resource "aws_cloudwatch_log_group" "web_log_group" {
-  name              = "/aws/lambda/${var.app_name}-web"
+  name              = "/aws/lambda/${lower(var.app_name)}-web"
   retention_in_days = 1
 }
 
 resource "aws_cloudwatch_log_group" "artisan_log_group" {
-  name              = "/aws/lambda/${var.app_name}-artisan"
+  name              = "/aws/lambda/${lower(var.app_name)}-artisan"
   retention_in_days = 1
 }
 
 resource "aws_cloudwatch_log_group" "jobs_worker_log_group" {
-  name              = "/aws/lambda/${var.app_name}-jobs-worker"
+  name              = "/aws/lambda/${lower(var.app_name)}-jobs-worker"
   retention_in_days = 1
 }
 
 resource "aws_cloudwatch_event_rule" "artisan_events_rule_schedule" {
-  name                = "${var.app_name}-artisan-schedule-runner"
+  name                = "${lower(var.app_name)}-artisan-schedule-runner"
   schedule_expression = "rate(1 day)"
   state               = "ENABLED"
 }
@@ -33,7 +33,7 @@ resource "aws_cloudwatch_event_target" "artisan_schedule" {
 # IAM
 #
 resource "aws_iam_role" "lambda_execution" {
-  name = "${var.app_name}-lambda-role"
+  name = "${lower(var.app_name)}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -54,7 +54,7 @@ resource "aws_iam_role" "lambda_execution" {
 }
 
 resource "aws_iam_policy" "lambda_execution" {
-  name = "${var.app_name}-lambda-policy"
+  name = "${lower(var.app_name)}-lambda-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -73,7 +73,7 @@ resource "aws_iam_policy" "lambda_execution" {
             data.aws_region.current.name,
             data.aws_caller_identity.current.account_id,
             "log-group",
-            "/aws/lambda/${var.app_name}-*",
+            "/aws/lambda/${lower(var.app_name)}-*",
             "*"
           ]),
         ]
@@ -91,7 +91,7 @@ resource "aws_iam_policy" "lambda_execution" {
             data.aws_region.current.name,
             data.aws_caller_identity.current.account_id,
             "log-group",
-            "/aws/lambda/${var.app_name}-*",
+            "/aws/lambda/${lower(var.app_name)}-*",
             "*",
             "*"
           ]),
@@ -169,7 +169,7 @@ resource "aws_lambda_function" "web_lambda_function" {
   source_code_hash = filesha256(var.filename)
   handler          = "Bref\\LaravelBridge\\Http\\OctaneHandler"
   runtime          = var.lambda_runtime
-  function_name    = "${var.app_name}-web"
+  function_name    = "${lower(var.app_name)}-web"
   memory_size      = 1024
   timeout          = 28
   architectures    = ["arm64"]
@@ -207,7 +207,7 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   source_code_hash = filesha256(var.filename)
   handler          = "artisan"
   runtime          = var.lambda_runtime
-  function_name    = "${var.app_name}-artisan"
+  function_name    = "${lower(var.app_name)}-artisan"
   memory_size      = 1024
   timeout          = 720
   architectures    = ["arm64"]
@@ -246,7 +246,7 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
   source_code_hash = filesha256(var.filename)
   handler          = "Bref\\LaravelBridge\\Queue\\QueueHandler"
   runtime          = var.lambda_runtime
-  function_name    = "${var.app_name}-jobs-worker"
+  function_name    = "${lower(var.app_name)}-jobs-worker"
   memory_size      = 1024
   timeout          = 60
   architectures    = ["arm64"]
@@ -305,7 +305,7 @@ resource "random_string" "random" {
 }
 
 resource "aws_sqs_queue" "jobs_queue" {
-  name = "${var.app_name}-jobs-${random_string.random.result}"
+  name = "${lower(var.app_name)}-jobs-${random_string.random.result}"
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.jobs_dlq.arn
     maxReceiveCount     = 3
@@ -315,14 +315,14 @@ resource "aws_sqs_queue" "jobs_queue" {
 
 resource "aws_sqs_queue" "jobs_dlq" {
   message_retention_seconds = 1209600
-  name                      = "${var.app_name}-jobs-dlq-${random_string.random.result}"
+  name                      = "${lower(var.app_name)}-jobs-dlq-${random_string.random.result}"
 }
 
 #
 # DynamoDB
 #
 resource "aws_dynamodb_table" "cache_table" {
-  name         = "${var.app_name}-cache-table-${random_string.random.result}"
+  name         = "${lower(var.app_name)}-cache-table-${random_string.random.result}"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
@@ -341,7 +341,7 @@ resource "aws_dynamodb_table" "cache_table" {
 # API Gateway
 #
 resource "aws_apigatewayv2_api" "http_api" {
-  name                         = var.app_name
+  name                         = lower(var.app_name)
   protocol_type                = "HTTP"
   disable_execute_api_endpoint = true
   ip_address_type              = "dualstack"
