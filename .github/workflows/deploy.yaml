@@ -93,7 +93,7 @@ jobs:
             -var="mail_host=${{ vars.MAIL_HOST }}" \
             -var="mail_username=${{ secrets.MAIL_USERNAME }}" \
             -var="mail_password=${{ secrets.MAIL_PASSWORD }}" \
-            -var="mail_from_address=${{ secrets.MAIL_FROM_ADDRESS }}"
+            -var="mail_from_address=${{ secrets.MAIL_FROM_ADDRESS }}" \
             -var="scout_prefix=${{ secrets.SCOUT_PREFIX }}" \
             -var="algolia_app_id=${{ secrets.ALGOLIA_APP_ID }}" \
             -var="algolia_secret=${{ secrets.ALGOLIA_SECRET }}" \
