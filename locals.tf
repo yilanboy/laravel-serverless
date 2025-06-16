@@ -38,5 +38,6 @@ locals {
     SCOUT_PREFIX                = var.scout_prefix
     ALGOLIA_APP_ID              = var.algolia_app_id
     ALGOLIA_SECRET              = var.algolia_secret
+    LOG_STDERR_FORMATTER        = "Bref\\Monolog\\CloudWatchFormatter"
   }
 }
