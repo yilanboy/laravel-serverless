@@ -5,7 +5,7 @@ locals {
 locals {
   lambda_function_environment_variables = {
     MAINTENANCE_MODE            = 0
-    APP_NAME                    = local.app_name
+    APP_NAME                    = var.app_name
     APP_ENV                     = var.app_env
     APP_KEY                     = var.app_key
     APP_DEBUG                   = var.app_debug
