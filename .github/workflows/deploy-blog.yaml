@@ -76,8 +76,16 @@ jobs:
 
           cd ..
 
+          # create terraform config file
+          cat <<EOF > terraform.config
+          bucket="us-west-2-terraform-state-storage"
+          key="us-west-2-blog-serverless.tfstate"
+          region="us-west-2"
+          dynamodb_table="us-west-2-terraform-state-locking"
+          EOF
+
           # deploy
-          terraform init
+          terraform init -backend-config="./terraform.config"
           terraform apply \
             -var="enable_vpc=true" \
             -var='subnet_ids=${{ secrets.BLOG_SUBNET_IDS }}' \
