@@ -71,6 +71,7 @@ jobs:
           rm -rf tests
           rm -rf .git
           rm -rf .github
+          rm database/database.sqlite
 
           # zip the laravel app
           zip -r "../laravel-app.zip" .
