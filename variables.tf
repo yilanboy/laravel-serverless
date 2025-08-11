@@ -108,7 +108,6 @@ variable "app_locale" {
   default = "zh_TW"
 }
 
-
 variable "app_url" {
   type = string
 }
@@ -195,12 +194,14 @@ variable "aws_use_path_style_endpoint" {
 }
 
 variable "captcha_site_key" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "captcha_secret_key" {
   type      = string
   sensitive = true
+  default   = ""
 }
 
 variable "mail_mailer" {
@@ -231,14 +232,17 @@ variable "mail_from_address" {
 }
 
 variable "scout_prefix" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "algolia_app_id" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "algolia_secret" {
   type      = string
   sensitive = true
+  default   = ""
 }
