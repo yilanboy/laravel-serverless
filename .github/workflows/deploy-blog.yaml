@@ -80,32 +80,32 @@ jobs:
           terraform init
           terraform apply \
             -var="enable_vpc=true" \
-            -var='subnet_ids=${{ secrets.SUBNET_IDS }}' \
-            -var='security_group_ids=${{ secrets.SECURITY_GROUP_IDS }}' \
+            -var='subnet_ids=${{ secrets.BLOG_SUBNET_IDS }}' \
+            -var='security_group_ids=${{ secrets.BLOG_SECURITY_GROUP_IDS }}' \
             -var="enable_filesystem=true" \
-            -var="access_point_arn=${{ secrets.ACCESS_POINT_ARN }}" \
-            -var="app_name=${{ vars.APP_NAME }}" \
-            -var="tag_service=${{ vars.TAG_SERVICE }}" \
-            -var="tag_environment=${{ vars.TAG_ENVIRONMENT }}" \
-            -var="tag_owner=${{ vars.TAG_OWNER }}" \
-            -var="app_key=${{ secrets.APP_KEY }}" \
-            -var="app_url=${{ vars.APP_URL }}" \
-            -var="asset_url=${{ vars.ASSET_URL }}" \
-            -var="aws_bucket=${{ vars.AWS_BUCKET }}" \
-            -var="aws_url=${{ vars.AWS_URL }}" \
-            -var="captcha_site_key=${{ secrets.CAPTCHA_SITE_KEY }}" \
-            -var="captcha_secret_key=${{ secrets.CAPTCHA_SECRET_KEY }}" \
-            -var="mail_host=${{ vars.MAIL_HOST }}" \
-            -var="mail_username=${{ secrets.MAIL_USERNAME }}" \
-            -var="mail_password=${{ secrets.MAIL_PASSWORD }}" \
-            -var="mail_from_address=${{ secrets.MAIL_FROM_ADDRESS }}" \
-            -var="scout_prefix=${{ secrets.SCOUT_PREFIX }}" \
-            -var="algolia_app_id=${{ secrets.ALGOLIA_APP_ID }}" \
-            -var="algolia_secret=${{ secrets.ALGOLIA_SECRET }}" \
-            -var="certificate_arn=${{ secrets.CERTIFICATE_ARN }}" \
-            -var="custom_domain_name=${{ vars.CUSTOM_DOMAIN_NAME }}" \
+            -var="access_point_arn=${{ secrets.BLOG_ACCESS_POINT_ARN }}" \
+            -var="app_name=${{ vars.BLOG_APP_NAME }}" \
+            -var="tag_service=${{ vars.BLOG_TAG_SERVICE }}" \
+            -var="tag_environment=${{ vars.BLOG_TAG_ENVIRONMENT }}" \
+            -var="tag_owner=${{ vars.BLOG_TAG_OWNER }}" \
+            -var="app_key=${{ secrets.BLOG_APP_KEY }}" \
+            -var="app_url=${{ vars.BLOG_APP_URL }}" \
+            -var="asset_url=${{ vars.BLOG_ASSET_URL }}" \
+            -var="aws_bucket=${{ vars.BLOG_AWS_BUCKET }}" \
+            -var="aws_url=${{ vars.BLOG_AWS_URL }}" \
+            -var="captcha_site_key=${{ secrets.BLOG_CAPTCHA_SITE_KEY }}" \
+            -var="captcha_secret_key=${{ secrets.BLOG_CAPTCHA_SECRET_KEY }}" \
+            -var="mail_host=${{ vars.BLOG_MAIL_HOST }}" \
+            -var="mail_username=${{ secrets.BLOG_MAIL_USERNAME }}" \
+            -var="mail_password=${{ secrets.BLOG_MAIL_PASSWORD }}" \
+            -var="mail_from_address=${{ secrets.BLOG_MAIL_FROM_ADDRESS }}" \
+            -var="scout_prefix=${{ secrets.BLOG_SCOUT_PREFIX }}" \
+            -var="algolia_app_id=${{ secrets.BLOG_ALGOLIA_APP_ID }}" \
+            -var="algolia_secret=${{ secrets.BLOG_ALGOLIA_SECRET }}" \
+            -var="certificate_arn=${{ secrets.BLOG_CERTIFICATE_ARN }}" \
+            -var="custom_domain_name=${{ vars.BLOG_CUSTOM_DOMAIN_NAME }}" \
             -var="filename=./laravel-app.zip" \
             -auto-approve
 
           # sync front-end assets to s3 bucket
-          aws s3 sync laravel-app/public "s3://${{ vars.ASSET_AWS_BUCKET }}"
+          aws s3 sync laravel-app/public "s3://${{ vars.BLOG_ASSET_AWS_BUCKET }}"
