@@ -1,4 +1,4 @@
-name: Deploy my blog CMS to AWS Lambda
+name: Deploy my CMS to AWS Lambda
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   deploy-laravel-to-lambda:
-    name: Deploy my blog CMS to AWS Lambda
+    name: Deploy my CMS to AWS Lambda
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
