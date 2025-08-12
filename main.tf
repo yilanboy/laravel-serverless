@@ -177,7 +177,7 @@ resource "aws_lambda_function" "web_lambda_function" {
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = merge(local.lambda_function_environment_variables, {
+    variables = merge(var.environment_variables, {
       BREF_LOOP_MAX                    = "250"
       OCTANE_PERSIST_DATABASE_SESSIONS = "1"
     })
@@ -218,7 +218,7 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   ]
 
   environment {
-    variables = local.lambda_function_environment_variables
+    variables = var.environment_variables
   }
 
   dynamic "vpc_config" {
@@ -254,7 +254,7 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = local.lambda_function_environment_variables
+    variables = var.environment_variables
   }
 
   dynamic "vpc_config" {
