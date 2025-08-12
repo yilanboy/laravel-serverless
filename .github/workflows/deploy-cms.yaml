@@ -52,10 +52,10 @@ jobs:
           php artisan optimize
           php artisan config:clear
           php artisan migrate --force
-          php artisan wayfinder:generate
 
           # generate front-end assets
           npm ci
+          php artisan wayfinder:generate
           npm run build
 
           # enable bref pgsql extension in lambda if you need it
