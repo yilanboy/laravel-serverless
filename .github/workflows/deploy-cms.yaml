@@ -33,6 +33,10 @@ jobs:
         with:
           php-version: "8.4"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.5.0"
+
       - name: Setup terraform
         # https://github.com/hashicorp/setup-terraform
         uses: hashicorp/setup-terraform@v3
