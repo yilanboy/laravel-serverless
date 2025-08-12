@@ -37,7 +37,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.5.0"
-          architecture: "arm64"
 
       - name: Setup terraform
         # https://github.com/hashicorp/setup-terraform
