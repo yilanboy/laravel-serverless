@@ -177,10 +177,12 @@ resource "aws_lambda_function" "web_lambda_function" {
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = merge(var.environment_variables, {
+    variables = merge({
       BREF_LOOP_MAX                    = "250"
       OCTANE_PERSIST_DATABASE_SESSIONS = "1"
-    })
+      DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache_table.name
+      SQS_QUEUE                        = aws_sqs_queue.jobs_queue.url
+    }, var.environment_variables)
   }
 
   dynamic "vpc_config" {
@@ -218,7 +220,10 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   ]
 
   environment {
-    variables = var.environment_variables
+    variables = merge({
+      DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
+      SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
+    }, var.environment_variables)
   }
 
   dynamic "vpc_config" {
@@ -254,7 +259,10 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = var.environment_variables
+    variables = merge({
+      DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
+      SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
+    }, var.environment_variables)
   }
 
   dynamic "vpc_config" {
