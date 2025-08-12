@@ -83,6 +83,9 @@ jobs:
 
           cd ..
 
+          # create environment variables json file
+          echo '${{ secrets.CMS_ENVIRONMENT_VARIABLES_JSON }}' > environment-variables.json
+
           # create terraform config file
           cat <<EOF > terraform.config
           bucket="us-west-2-terraform-state-storage"
@@ -97,15 +100,15 @@ jobs:
 
           # VPC settings
           enable_vpc         = true
-          subnet_ids         = ${{ secrets.CMS_SUBNET_IDS }}
-          security_group_ids = ${{ secrets.CMS_SECURITY_GROUP_IDS }}
+          subnet_ids         = ${{ vars.CMS_SUBNET_IDS }}
+          security_group_ids = ${{ vars.CMS_SECURITY_GROUP_IDS }}
 
           # File storage settings
           enable_filesystem = true
-          access_point_arn  = "${{ secrets.CMS_ACCESS_POINT_ARN }}"
+          access_point_arn  = "${{ vars.CMS_ACCESS_POINT_ARN }}"
 
           # api gateway settings
-          certificate_arn    = "${{ secrets.CMS_CERTIFICATE_ARN }}"
+          certificate_arn    = "${{ vars.CMS_CERTIFICATE_ARN }}"
           custom_domain_name = "${{ vars.CMS_CUSTOM_DOMAIN_NAME }}"
 
           # provider settings
@@ -117,7 +120,7 @@ jobs:
           aws_bucket = "${{ vars.CMS_AWS_BUCKET }}"
 
           # Lambda settings
-          environment_variables = ${{ secrets.CMS_ENVIRONMENT_VARIABLES }}
+          environment_variables_json_file = "./environment-variables.json"
 
           filename="./laravel-app.zip"
           EOF

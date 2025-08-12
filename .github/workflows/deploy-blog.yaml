@@ -81,7 +81,7 @@ jobs:
 
           cd ..
 
-          # create
+          # create environment variables json file
           echo '${{ secrets.BLOG_ENVIRONMENT_VARIABLES_JSON }}' > environment-variables.json
 
           # create terraform config file
