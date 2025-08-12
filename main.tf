@@ -182,7 +182,7 @@ resource "aws_lambda_function" "web_lambda_function" {
       OCTANE_PERSIST_DATABASE_SESSIONS = "1"
       DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache_table.name
       SQS_QUEUE                        = aws_sqs_queue.jobs_queue.url
-    }, var.environment_variables)
+    }, jsondecode(file(var.environment_variables_json_file)))
   }
 
   dynamic "vpc_config" {
@@ -223,7 +223,7 @@ resource "aws_lambda_function" "artisan_lambda_function" {
     variables = merge({
       DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
       SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
-    }, var.environment_variables)
+    }, jsondecode(file(var.environment_variables_json_file)))
   }
 
   dynamic "vpc_config" {
@@ -262,7 +262,7 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
     variables = merge({
       DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
       SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
-    }, var.environment_variables)
+    }, jsondecode(file(var.environment_variables_json_file)))
   }
 
   dynamic "vpc_config" {

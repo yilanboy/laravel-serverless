@@ -81,6 +81,9 @@ jobs:
 
           cd ..
 
+          # create
+          echo '${{ secrets.BLOG_ENVIRONMENT_VARIABLES_JSON }}' > environment-variables.json
+
           # create terraform config file
           cat <<EOF > terraform.config
           bucket="us-west-2-terraform-state-storage"
@@ -95,15 +98,15 @@ jobs:
 
           # VPC settings
           enable_vpc         = true
-          subnet_ids         = ${{ secrets.BLOG_SUBNET_IDS }}
-          security_group_ids = ${{ secrets.BLOG_SECURITY_GROUP_IDS }}
+          subnet_ids         = ${{ vars.BLOG_SUBNET_IDS }}
+          security_group_ids = ${{ vars.BLOG_SECURITY_GROUP_IDS }}
 
           # File storage settings
           enable_filesystem = true
-          access_point_arn  = "${{ secrets.BLOG_ACCESS_POINT_ARN }}"
+          access_point_arn  = "${{ vars.BLOG_ACCESS_POINT_ARN }}"
 
           # api gateway settings
-          certificate_arn    = "${{ secrets.BLOG_CERTIFICATE_ARN }}"
+          certificate_arn    = "${{ vars.BLOG_CERTIFICATE_ARN }}"
           custom_domain_name = "${{ vars.BLOG_CUSTOM_DOMAIN_NAME }}"
 
           # provider settings
@@ -115,9 +118,9 @@ jobs:
           aws_bucket = "${{ vars.BLOG_AWS_BUCKET }}"
 
           # Lambda settings
-          environment_variables = ${{ secrets.BLOG_ENVIRONMENT_VARIABLES }}
+          environment_variables_json_file = "./environment-variables.json"
 
-          filename="./laravel-app.zip"
+          filename = "./laravel-app.zip"
           EOF
 
           # deploy

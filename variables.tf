@@ -86,9 +86,9 @@ variable "app_name" {
 #
 # Lambda environment variables
 #
-variable "environment_variables" {
-  type        = map(string)
-  description = "Environment variables for the Lambda function."
+variable "environment_variables_json_file" {
+  type        = string
+  description = "Path to the JSON file containing environment variables for the Lambda function."
 }
 
 #
