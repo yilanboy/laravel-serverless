@@ -90,25 +90,25 @@ jobs:
 
           # create terraform.tfvars file
           cat <<EOF > terraform.tfvars
-          app_name="${{ vars.CMS_APP_NAME }}"
+          app_name="${{ vars.BLOG_APP_NAME }}"
 
           # VPC settings
           enable_vpc         = true
-          subnet_ids         = ${{ secrets.CMS_SUBNET_IDS }}
-          security_group_ids = ${{ secrets.CMS_SECURITY_GROUP_IDS }}
+          subnet_ids         = ${{ secrets.BLOG_SUBNET_IDS }}
+          security_group_ids = ${{ secrets.BLOG_SECURITY_GROUP_IDS }}
 
           # File storage settings
           enable_filesystem = true
           access_point_arn  = "${{ secrets.BLOG_ACCESS_POINT_ARN }}"
 
           # api gateway settings
-          certificate_arn    = "${{ secrets.CMS_CERTIFICATE_ARN }}"
-          custom_domain_name = "${{ vars.CMS_CUSTOM_DOMAIN_NAME }}"
+          certificate_arn    = "${{ secrets.BLOG_CERTIFICATE_ARN }}"
+          custom_domain_name = "${{ vars.BLOG_CUSTOM_DOMAIN_NAME }}"
 
           # provider settings
-          tag_service     = "${{ vars.CMS_TAG_SERVICE }}"
-          tag_environment = "${{ vars.CMS_TAG_ENVIRONMENT }}"
-          tag_owner       = "${{ vars.CMS_TAG_OWNER }}"
+          tag_service     = "${{ vars.BLOG_TAG_SERVICE }}"
+          tag_environment = "${{ vars.BLOG_TAG_ENVIRONMENT }}"
+          tag_owner       = "${{ vars.BLOG_TAG_OWNER }}"
 
           # S3 bucket settings
           aws_bucket = "${{ vars.BLOG_AWS_BUCKET }}"
@@ -116,10 +116,8 @@ jobs:
           # Lambda settings
           environment_variables = ${{ secrets.BLOG_ENVIRONMENT_VARIABLES }}
 
-          filename=./laravel-app.zip
+          filename="./laravel-app.zip"
           EOF
-
-          cat terraform.tfvars
 
           # deploy
           terraform init -backend-config="./terraform.config"
