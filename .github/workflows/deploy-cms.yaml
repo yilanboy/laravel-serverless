@@ -54,7 +54,7 @@ jobs:
           php artisan migrate --force
 
           # generate front-end assets
-          npm ci
+          npm install
           php artisan wayfinder:generate
           npm run build
 
