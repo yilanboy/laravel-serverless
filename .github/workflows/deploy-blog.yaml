@@ -55,7 +55,7 @@ jobs:
           php artisan feed:install
 
           # generate front-end assets
-          npm install
+          npm ci
           npm run build
 
           # enable bref pgsql extension in lambda if you need it
