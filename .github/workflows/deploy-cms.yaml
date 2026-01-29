@@ -42,8 +42,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.8.0"
-          cache: "pnpm"
-          cache-dependency-path: "laravel-app/pnpm-lock.yaml"
 
       - name: Setup terraform
         # https://github.com/hashicorp/setup-terraform
