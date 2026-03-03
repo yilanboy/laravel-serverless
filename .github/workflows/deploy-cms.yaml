@@ -64,11 +64,6 @@ jobs:
           php artisan wayfinder:generate
           pnpm run build
 
-          # enable bref pgsql extension in lambda if you need it
-          # https://bref.sh/docs/environment/php#extensions-installed-but-disabled-by-default
-          # mkdir -p php/conf.d
-          # echo "extension=pdo_pgsql" > php/conf.d/pgsql.ini
-
           # remove unnecessary files
           rm -rf node_modules
           rm -rf public/storage
@@ -84,7 +79,7 @@ jobs:
           rm database/database.sqlite
 
           # zip the laravel app
-          zip -r "../laravel-app.zip" .
+          zip --quiet --recurse-paths --symlinks "../laravel-app.zip" .
 
           cd ..
 
