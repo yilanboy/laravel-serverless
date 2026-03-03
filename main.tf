@@ -182,6 +182,9 @@ resource "aws_lambda_function" "web_lambda_function" {
       OCTANE_PERSIST_DATABASE_SESSIONS = "1"
       DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache_table.name
       SQS_QUEUE                        = aws_sqs_queue.jobs_queue.url
+      BREF_RUNTIME                     = "Bref\\FunctionRuntime\\Main"
+      LOG_CHANNEL                      = "stderr"
+      LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
     }, jsondecode(file(var.environment_variables_json_file)))
   }
 
@@ -214,15 +217,15 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   timeout          = 720
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
-  layers = [
-    var.php_lambda_layer_arn,
-    var.console_lambda_layer_arn
-  ]
+  layers           = [var.php_lambda_layer_arn]
 
   environment {
     variables = merge({
       DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
       SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
+      BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
+      LOG_CHANNEL          = "stderr"
+      LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
     }, jsondecode(file(var.environment_variables_json_file)))
   }
 
@@ -262,6 +265,9 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
     variables = merge({
       DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
       SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
+      BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
+      LOG_CHANNEL          = "stderr"
+      LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
     }, jsondecode(file(var.environment_variables_json_file)))
   }
 

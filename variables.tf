@@ -27,19 +27,14 @@ variable "filename" {
 variable "lambda_runtime" {
   type = string
   # https://bref.sh/docs/runtimes#aws-lambda-layers
-  default = "provided.al2"
+  default = "provided.al2023"
 }
 
 variable "php_lambda_layer_arn" {
   type = string
   # check all php layer runtime in this page
   # https://runtimes.bref.sh/?region=us-west-2
-  default = "arn:aws:lambda:us-west-2:534081306603:layer:arm-php-84:36"
-}
-
-variable "console_lambda_layer_arn" {
-  type    = string
-  default = "arn:aws:lambda:us-west-2:534081306603:layer:console:117"
+  default = "arn:aws:lambda:us-west-2:873528684822:layer:arm-php-84:15"
 }
 
 variable "enable_vpc" {
