@@ -3,17 +3,17 @@
 #
 resource "aws_cloudwatch_log_group" "web_log_group" {
   name              = "/aws/lambda/${local.app_name}-web"
-  retention_in_days = 1
+  retention_in_days = var.log_retention_in_days
 }
 
 resource "aws_cloudwatch_log_group" "artisan_log_group" {
   name              = "/aws/lambda/${local.app_name}-artisan"
-  retention_in_days = 1
+  retention_in_days = var.log_retention_in_days
 }
 
 resource "aws_cloudwatch_log_group" "jobs_worker_log_group" {
   name              = "/aws/lambda/${local.app_name}-jobs-worker"
-  retention_in_days = 1
+  retention_in_days = var.log_retention_in_days
 }
 
 resource "aws_cloudwatch_event_rule" "artisan_events_rule_schedule" {
@@ -58,7 +58,7 @@ resource "aws_iam_policy" "lambda_execution" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Action = [
           "logs:CreateLogStream",
@@ -137,7 +137,7 @@ resource "aws_iam_policy" "lambda_execution" {
         Resource = aws_sqs_queue.jobs_queue.arn
         Effect   = "Allow"
       },
-      {
+      ], var.enable_vpc ? [{
         Action = [
           "ec2:CreateNetworkInterface",
           "ec2:DescribeNetworkInterfaces",
@@ -146,13 +146,11 @@ resource "aws_iam_policy" "lambda_execution" {
           "ec2:AssignPrivateIpAddresses",
           "ec2:UnassignPrivateIpAddresses",
           "ec2:DescribeSecurityGroups",
-          "ec2:DescribeSubnets",
           "ec2:DescribeVpcs"
         ]
         Resource = "*"
         Effect   = "Allow"
-      }
-    ]
+    }] : [])
   })
 }
 
@@ -170,22 +168,23 @@ resource "aws_lambda_function" "web_lambda_function" {
   handler          = "Bref\\LaravelBridge\\Http\\OctaneHandler"
   runtime          = var.lambda_runtime
   function_name    = "${local.app_name}-web"
-  memory_size      = 1024
+  memory_size      = var.lambda_memory_size
   timeout          = 28
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = merge({
-      BREF_LOOP_MAX                    = "250"
-      OCTANE_PERSIST_DATABASE_SESSIONS = "1"
-      DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache_table.name
-      SQS_QUEUE                        = aws_sqs_queue.jobs_queue.url
-      BREF_RUNTIME                     = "Bref\\FunctionRuntime\\Main"
-      LOG_CHANNEL                      = "stderr"
-      LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
-    }, jsondecode(file(var.environment_variables_json_file)))
+    variables = merge(
+      {
+        BREF_LOOP_MAX                    = "250"
+        OCTANE_PERSIST_DATABASE_SESSIONS = "1"
+        DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache_table.name
+        SQS_QUEUE                        = aws_sqs_queue.jobs_queue.url
+      },
+      local.bref_v3_environment_variables,
+      jsondecode(file(var.environment_variables_json_file))
+    )
   }
 
   dynamic "vpc_config" {
@@ -213,20 +212,21 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   handler          = "artisan"
   runtime          = var.lambda_runtime
   function_name    = "${local.app_name}-artisan"
-  memory_size      = 1024
+  memory_size      = var.lambda_memory_size
   timeout          = 720
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = merge({
-      DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
-      SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
-      BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
-      LOG_CHANNEL          = "stderr"
-      LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
-    }, jsondecode(file(var.environment_variables_json_file)))
+    variables = merge(
+      {
+        DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
+        SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
+      },
+      local.bref_v3_environment_variables,
+      jsondecode(file(var.environment_variables_json_file))
+    )
   }
 
   dynamic "vpc_config" {
@@ -255,20 +255,21 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
   handler          = "Bref\\LaravelBridge\\Queue\\QueueHandler"
   runtime          = var.lambda_runtime
   function_name    = "${local.app_name}-jobs-worker"
-  memory_size      = 1024
+  memory_size      = var.lambda_memory_size
   timeout          = 60
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
   layers           = [var.php_lambda_layer_arn]
 
   environment {
-    variables = merge({
-      DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
-      SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
-      BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
-      LOG_CHANNEL          = "stderr"
-      LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
-    }, jsondecode(file(var.environment_variables_json_file)))
+    variables = merge(
+      {
+        DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
+        SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
+      },
+      local.bref_v3_environment_variables,
+      jsondecode(file(var.environment_variables_json_file))
+    )
   }
 
   dynamic "vpc_config" {
@@ -322,7 +323,7 @@ resource "aws_sqs_queue" "jobs_queue" {
   name = "${local.app_name}-jobs-${random_string.random.result}"
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.jobs_dlq.arn
-    maxReceiveCount     = 3
+    maxReceiveCount     = var.sqs_max_receive_count
   })
   visibility_timeout_seconds = 360
 }
@@ -368,8 +369,8 @@ resource "aws_apigatewayv2_stage" "http_api_stage" {
 
   default_route_settings {
     detailed_metrics_enabled = false
-    throttling_burst_limit   = 500
-    throttling_rate_limit    = 1000
+    throttling_burst_limit   = var.api_gateway_throttle_burst_limit
+    throttling_rate_limit    = var.api_gateway_throttle_rate_limit
   }
 }
 

@@ -20,76 +20,122 @@ variable "tag_owner" {
 # lambda settings
 #
 variable "filename" {
-  type    = string
-  default = "./laravel-app.zip"
+  description = "Path to the Lambda deployment zip file"
+  type        = string
+  default     = "./laravel-app.zip"
 }
 
 variable "lambda_runtime" {
-  type = string
+  description = "Lambda runtime identifier (Bref uses custom runtime)"
+  type        = string
   # https://bref.sh/docs/runtimes#aws-lambda-layers
   default = "provided.al2023"
 }
 
 variable "php_lambda_layer_arn" {
-  type = string
+  description = "ARN of the Bref PHP Lambda layer"
+  type        = string
   # check all php layer runtime in this page
   # https://runtimes.bref.sh/?region=us-west-2
   default = "arn:aws:lambda:us-west-2:873528684822:layer:arm-php-85:12"
 }
 
+variable "lambda_memory_size" {
+  description = "Memory size in MB for all Lambda functions"
+  type        = number
+  default     = 1024
+}
+
 variable "enable_vpc" {
-  type    = bool
-  default = false
+  description = "Whether to attach Lambda functions to a VPC"
+  type        = bool
+  default     = false
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  description = "List of subnet IDs for Lambda VPC configuration (required when enable_vpc is true)"
+  type        = list(string)
 }
 
 variable "security_group_ids" {
-  type = list(string)
+  description = "List of security group IDs for Lambda VPC configuration (required when enable_vpc is true)"
+  type        = list(string)
 }
 
 variable "enable_filesystem" {
-  type    = bool
-  default = false
+  description = "Whether to mount an EFS filesystem to Lambda functions"
+  type        = bool
+  default     = false
 }
 
 variable "access_point_arn" {
-  type = string
+  description = "ARN of the EFS access point (required when enable_filesystem is true)"
+  type        = string
 }
-
 
 #
 # api gateway settings
 #
 variable "certificate_arn" {
-  type = string
+  description = "ARN of the AWS ACM certificate for the custom domain"
+  type        = string
 }
 
 variable "custom_domain_name" {
-  type = string
+  description = "Custom domain name for the API Gateway (e.g. app.example.com)"
+  type        = string
+}
+
+variable "api_gateway_throttle_burst_limit" {
+  description = "API Gateway throttling burst limit"
+  type        = number
+  default     = 500
+}
+
+variable "api_gateway_throttle_rate_limit" {
+  description = "API Gateway throttling rate limit"
+  type        = number
+  default     = 1000
 }
 
 #
 # laravel settings
 #
 variable "app_name" {
-  type = string
+  description = "Application name used for resource naming"
+  type        = string
 }
 
 #
 # Lambda environment variables
 #
 variable "environment_variables_json_file" {
-  type        = string
   description = "Path to the JSON file containing environment variables for the Lambda function."
+  type        = string
 }
 
 #
 # S3 settings
 #
 variable "aws_bucket" {
-  type        = string
   description = "The name of the S3 bucket to store the Laravel application files."
+  type        = string
+}
+
+#
+# CloudWatch settings
+#
+variable "log_retention_in_days" {
+  description = "Number of days to retain CloudWatch log events"
+  type        = number
+  default     = 1
+}
+
+#
+# SQS settings
+#
+variable "sqs_max_receive_count" {
+  description = "Maximum number of times a message can be received before being sent to the DLQ"
+  type        = number
+  default     = 3
 }
