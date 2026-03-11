@@ -177,12 +177,14 @@ resource "aws_lambda_function" "web_lambda_function" {
   environment {
     variables = merge(
       {
+        BREF_RUNTIME                     = "Bref\\FunctionRuntime\\Main"
         BREF_LOOP_MAX                    = "250"
         OCTANE_PERSIST_DATABASE_SESSIONS = "1"
+        LOG_CHANNEL                      = "stderr"
+        LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
         DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache_table.name
         SQS_QUEUE                        = aws_sqs_queue.jobs_queue.url
       },
-      local.bref_v3_environment_variables,
       jsondecode(file(var.environment_variables_json_file))
     )
   }
@@ -221,10 +223,12 @@ resource "aws_lambda_function" "artisan_lambda_function" {
   environment {
     variables = merge(
       {
+        BREF_RUNTIME         = "Bref\\ConsoleRuntime\\Main"
+        LOG_CHANNEL          = "stderr"
+        LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
         SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
       },
-      local.bref_v3_environment_variables,
       jsondecode(file(var.environment_variables_json_file))
     )
   }
@@ -264,10 +268,12 @@ resource "aws_lambda_function" "jobs_worker_lambda_function" {
   environment {
     variables = merge(
       {
+        BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
+        LOG_CHANNEL          = "stderr"
+        LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache_table.name
         SQS_QUEUE            = aws_sqs_queue.jobs_queue.url
       },
-      local.bref_v3_environment_variables,
       jsondecode(file(var.environment_variables_json_file))
     )
   }
