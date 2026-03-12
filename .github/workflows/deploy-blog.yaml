@@ -44,6 +44,8 @@ jobs:
 
       - name: Deploy to AWS Lambda
         run: |
+          cd terraform
+
           git clone "${{ vars.BLOG_APP_GITHUB_URL }}" laravel-app
 
           cd laravel-app
