@@ -27,6 +27,19 @@ data "aws_iam_policy" "aws_lambda_vpc_access_execution_role" {
   arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+locals {
+  lambda_function_log_group_arn_wildcard = join(":", [
+    "arn",
+    data.aws_partition.current.id,
+    "logs",
+    data.aws_region.current.region,
+    data.aws_caller_identity.current.account_id,
+    "log-group",
+    "/aws/lambda/${local.app_name}*",
+    "*"
+  ])
+}
+
 resource "aws_iam_policy" "lambda_execution" {
   name = "${local.app_name}-lambda-policy"
 
@@ -40,16 +53,7 @@ resource "aws_iam_policy" "lambda_execution" {
           "logs:TagResource"
         ]
         Resource = [
-          join(":", [
-            "arn",
-            data.aws_partition.current.id,
-            "logs",
-            data.aws_region.current.region,
-            data.aws_caller_identity.current.account_id,
-            "log-group",
-            "/aws/lambda/${local.app_name}-*",
-            "*"
-          ]),
+          local.lambda_function_log_group_arn_wildcard
         ]
         Effect = "Allow"
       },
@@ -58,17 +62,7 @@ resource "aws_iam_policy" "lambda_execution" {
           "logs:PutLogEvents"
         ]
         Resource = [
-          join(":", [
-            "arn",
-            data.aws_partition.current.id,
-            "logs",
-            data.aws_region.current.region,
-            data.aws_caller_identity.current.account_id,
-            "log-group",
-            "/aws/lambda/${local.app_name}-*",
-            "*",
-            "*"
-          ]),
+          "${local.lambda_function_log_group_arn_wildcard}:*"
         ]
         Effect = "Allow"
       },
@@ -97,13 +91,7 @@ resource "aws_iam_policy" "lambda_execution" {
       {
         Action = [
           "sqs:SendMessage",
-          "sqs:ChangeMessageVisibility"
-        ]
-        Resource = aws_sqs_queue.jobs.arn
-        Effect   = "Allow"
-      },
-      {
-        Action = [
+          "sqs:ChangeMessageVisibility",
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes"
