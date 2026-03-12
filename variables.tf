@@ -1,6 +1,12 @@
 #
 # provider settings
 #
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-west-2"
+}
+
 variable "tag_service" {
   description = "Service name"
   type        = string
@@ -55,11 +61,13 @@ variable "enable_vpc" {
 variable "subnet_ids" {
   description = "List of subnet IDs for Lambda VPC configuration (required when enable_vpc is true)"
   type        = list(string)
+  default     = []
 }
 
 variable "security_group_ids" {
   description = "List of security group IDs for Lambda VPC configuration (required when enable_vpc is true)"
   type        = list(string)
+  default     = []
 }
 
 variable "enable_filesystem" {
@@ -71,6 +79,7 @@ variable "enable_filesystem" {
 variable "access_point_arn" {
   description = "ARN of the EFS access point (required when enable_filesystem is true)"
   type        = string
+  default     = ""
 }
 
 #
