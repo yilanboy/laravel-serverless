@@ -23,12 +23,16 @@ resource "aws_iam_role" "lambda_execution" {
   })
 }
 
+data "aws_iam_policy" "aws_lambda_vpc_access_execution_role" {
+  arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
 resource "aws_iam_policy" "lambda_execution" {
   name = "${local.app_name}-lambda-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = concat([
+    Statement = [
       {
         Action = [
           "logs:CreateLogStream",
@@ -107,24 +111,18 @@ resource "aws_iam_policy" "lambda_execution" {
         Resource = aws_sqs_queue.jobs.arn
         Effect   = "Allow"
       },
-      ], var.enable_vpc ? [{
-        Action = [
-          "ec2:CreateNetworkInterface",
-          "ec2:DescribeNetworkInterfaces",
-          "ec2:DescribeSubnets",
-          "ec2:DeleteNetworkInterface",
-          "ec2:AssignPrivateIpAddresses",
-          "ec2:UnassignPrivateIpAddresses",
-          "ec2:DescribeSecurityGroups",
-          "ec2:DescribeVpcs"
-        ]
-        Resource = "*"
-        Effect   = "Allow"
-    }] : [])
+    ],
   })
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_execution" {
   role       = aws_iam_role.lambda_execution.name
   policy_arn = aws_iam_policy.lambda_execution.arn
+}
+
+resource "aws_iam_role_policy_attachment" "aws_lambda_vpc_access_execution" {
+  count = var.enable_vpc ? 1 : 0
+
+  role       = aws_iam_role.lambda_execution.name
+  policy_arn = data.aws_iam_policy.aws_lambda_vpc_access_execution_role.arn
 }
