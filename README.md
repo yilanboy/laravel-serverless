@@ -52,15 +52,21 @@ CloudWatch Events (Schedule) ──→ Artisan Lambda (Scheduled Commands)
 
 ```text
 laravel-serverless/
-├── main.tf          # All AWS resources (Lambda, API Gateway, IAM, SQS, DynamoDB, CloudWatch)
-├── variables.tf     # Input variable declarations
-├── locals.tf        # Local values (normalizes app_name)
-├── data.tf          # Data sources (AWS account/region info, S3 bucket)
-├── output.tf        # Outputs (Lambda ARNs, API URL, SQS queue URLs)
-├── provider.tf      # AWS provider configuration (region, default tags)
-├── terraform.tf     # Terraform version constraints and S3 backend
+├── terraform/
+│   ├── api_gateway.tf  # API Gateway v2 (HTTP) configuration
+│   ├── cloudwatch.tf   # CloudWatch log groups
+│   ├── data.tf         # Data sources (AWS account/region info, S3 bucket)
+│   ├── dynamodb.tf     # DynamoDB cache table
+│   ├── iam.tf          # IAM roles and policies for Lambda
+│   ├── lambda.tf       # Lambda function definitions
+│   ├── locals.tf       # Local values (normalizes app_name)
+│   ├── outputs.tf      # Outputs (Lambda ARNs, API URL, SQS queue URLs)
+│   ├── provider.tf     # AWS provider configuration (region, default tags)
+│   ├── sqs.tf          # SQS queue and Dead Letter Queue
+│   ├── terraform.tf    # Terraform version constraints and S3 backend
+│   └── variables.tf    # Input variable declarations
 └── .github/
-    └── workflows/   # GitHub Actions deployment workflows
+    └── workflows/      # GitHub Actions deployment workflows
 ```
 
 ## Prerequisites
@@ -162,6 +168,8 @@ filename                        = "./laravel-app.zip"
 ### 4. Deploy
 
 ```bash
+cd terraform
+
 # Initialize Terraform
 terraform init -backend-config="./terraform.config"
 
@@ -172,7 +180,7 @@ terraform plan
 terraform apply -auto-approve
 
 # Sync frontend static assets to S3
-aws s3 sync laravel-app/public s3://your-asset-bucket
+aws s3 sync ../laravel-app/public s3://your-asset-bucket
 ```
 
 ### 5. Configure DNS
