@@ -22,7 +22,7 @@ jobs:
 
       - name: Configure aws credentials
         # https://github.com/aws-actions/configure-aws-credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::154471991214:role/github_action
           aws-region: us-west-2
@@ -40,7 +40,7 @@ jobs:
 
       - name: Setup terraform
         # https://github.com/hashicorp/setup-terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
 
       - name: Deploy to AWS Lambda
         run: |
