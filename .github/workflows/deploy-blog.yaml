@@ -125,3 +125,29 @@ jobs:
 
           # sync front-end assets to s3 bucket
           aws s3 sync laravel-app/public "s3://${{ vars.BLOG_ASSET_AWS_BUCKET }}"
+
+      - name: Send deployment status to Telegram
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" == "success" ]; then
+            EMOJI="✅"
+          elif [ "$STATUS" == "cancelled" ]; then
+            EMOJI="⚠️"
+          else
+            EMOJI="❌"
+          fi
+
+          MESSAGE="$EMOJI <b>DocFunc Blog PHP Deployment</b>
+
+          <b>Status:</b> $STATUS
+          <b>Workflow:</b> <a href=\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\">${{ github.workflow }}</a>
+          <b>Run:</b> #${{ github.run_number }}
+          <b>Branch:</b> ${{ github.ref_name }}
+          <b>Triggered by:</b> ${{ github.actor }}"
+
+          curl -s -o /dev/null -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "disable_web_page_preview=true" \
+            -d "parse_mode=HTML" \
+            --data-urlencode "text=$MESSAGE"
