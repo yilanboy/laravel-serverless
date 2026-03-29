@@ -53,7 +53,6 @@ jobs:
           # install composer dependencies
           composer install --prefer-dist --optimize-autoloader --no-dev
           php artisan config:clear
-          php artisan feed:install
 
           # generate front-end assets
           npm ci
