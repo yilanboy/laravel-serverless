@@ -1,0 +1,150 @@
+name: Deploy my AI agent to AWS Lambda
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: Who to greet
+        default: Allen
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-laravel-to-lambda:
+    name: Deploy my AI agent to AWS Lambda
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        # https://github.com/actions/checkout
+        uses: actions/checkout@v6
+
+      - name: Configure aws credentials
+        # https://github.com/aws-actions/configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::154471991214:role/github_action
+          aws-region: us-west-2
+
+      - name: Setup php
+        # https://github.com/shivammathur/setup-php
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+
+      - name: Setup node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: latest
+
+      - name: Setup terraform
+        # https://github.com/hashicorp/setup-terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Deploy to AWS Lambda
+        run: |
+          cd terraform
+
+          git clone "${{ vars.AI_AGENT_GITHUB_URL }}" laravel-app
+
+          cd laravel-app
+
+          # install composer dependencies
+          composer install --prefer-dist --optimize-autoloader --no-dev
+          php artisan config:clear
+          php artisan feed:install
+
+          # generate front-end assets
+          npm ci
+          npm run build
+
+          # remove unnecessary files
+          rm -rf node_modules
+          rm -rf public/storage
+          rm -rf resources/assets
+          rm -rf resources/css
+          rm -rf resources/images
+          rm -rf resources/js
+          rm -rf resources/ts
+          rm -rf storage
+          rm -rf tests
+          rm -rf .git
+          rm -rf .github
+
+          # zip the laravel app
+          zip --quiet --recurse-paths --symlinks "../laravel-app.zip" .
+
+          cd ..
+
+          # create environment variables json file
+          echo '${{ secrets.AI_AGENT_ENVIRONMENT_VARIABLES_JSON }}' > environment-variables.json
+
+          # create terraform config file
+          cat <<EOF > terraform.config
+          bucket="us-west-2-terraform-state-storage"
+          key="us-west-2-ai-agent-serverless.tfstate"
+          region="us-west-2"
+          dynamodb_table="us-west-2-terraform-state-locking"
+          EOF
+
+          # create terraform.tfvars file
+          cat <<EOF > terraform.tfvars
+          app_name="${{ vars.AI_AGENT_APP_NAME }}"
+
+          # VPC settings
+          enable_vpc         = true
+          subnet_ids         = ${{ vars.AI_AGENT_SUBNET_IDS }}
+          security_group_ids = ${{ vars.AI_AGENT_SECURITY_GROUP_IDS }}
+
+          # File storage settings
+          enable_filesystem = true
+          access_point_arn  = "${{ vars.AI_AGENT_ACCESS_POINT_ARN }}"
+
+          # api gateway settings
+          certificate_arn    = "${{ vars.AI_AGENT_CERTIFICATE_ARN }}"
+          custom_domain_name = "${{ vars.AI_AGENT_CUSTOM_DOMAIN_NAME }}"
+
+          # provider settings
+          tag_service     = "${{ vars.AI_AGENT_TAG_SERVICE }}"
+          tag_environment = "${{ vars.AI_AGENT_TAG_ENVIRONMENT }}"
+          tag_owner       = "${{ vars.AI_AGENT_TAG_OWNER }}"
+
+          # S3 bucket settings
+          aws_bucket = "${{ vars.AI_AGENT_AWS_BUCKET }}"
+
+          # Lambda settings
+          environment_variables_json_file = "./environment-variables.json"
+
+          filename = "./laravel-app.zip"
+          EOF
+
+          # deploy
+          terraform init -backend-config="./terraform.config"
+          terraform apply -auto-approve
+
+      - name: Send deployment status to Telegram
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" == "success" ]; then
+            EMOJI="✅"
+          elif [ "$STATUS" == "cancelled" ]; then
+            EMOJI="⚠️"
+          else
+            EMOJI="❌"
+          fi
+
+          MESSAGE="$EMOJI <b>Ange PHP Deployment</b>
+
+          <b>Status:</b> $STATUS
+          <b>Workflow:</b> <a href=\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\">${{ github.workflow }}</a>
+          <b>Run:</b> #${{ github.run_number }}
+          <b>Branch:</b> ${{ github.ref_name }}
+          <b>Triggered by:</b> ${{ github.actor }}"
+
+          curl -s -o /dev/null -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "disable_web_page_preview=true" \
+            -d "parse_mode=HTML" \
+            --data-urlencode "text=$MESSAGE"
