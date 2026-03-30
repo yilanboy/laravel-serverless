@@ -21,6 +21,7 @@ resource "aws_lambda_function" "web" {
         LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
         DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache.name
         SQS_PREFIX                       = aws_sqs_queue.jobs.url
+        SQS_QUEUE                        = aws_sqs_queue.jobs.url
       }
     )
   }
@@ -65,6 +66,7 @@ resource "aws_lambda_function" "artisan" {
         LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
         SQS_PREFIX           = aws_sqs_queue.jobs.url
+        SQS_QUEUE            = aws_sqs_queue.jobs.url
       }
     )
   }
@@ -110,6 +112,7 @@ resource "aws_lambda_function" "jobs_worker" {
         LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
         SQS_PREFIX           = aws_sqs_queue.jobs.url
+        SQS_QUEUE            = aws_sqs_queue.jobs.url
       }
     )
   }
