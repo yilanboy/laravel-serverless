@@ -40,67 +40,95 @@ locals {
   ])
 }
 
-resource "aws_iam_policy" "lambda_execution" {
-  name = "${local.app_name}-lambda-policy"
+data "aws_iam_policy_document" "lambda_execution" {
+  statement {
+    sid = "AllowLambdaLogging"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "logs:CreateLogStream",
-          "logs:CreateLogGroup",
-          "logs:TagResource"
-        ]
-        Resource = [
-          local.lambda_function_log_group_arn_wildcard
-        ]
-        Effect = "Allow"
-      },
-      {
-        Action = [
-          "logs:PutLogEvents"
-        ]
-        Resource = [
-          "${local.lambda_function_log_group_arn_wildcard}:*"
-        ]
-        Effect = "Allow"
-      },
-      {
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ]
-        Resource = "${data.aws_s3_bucket.main.arn}/*"
-        Effect   = "Allow"
-      },
-      {
-        Action = [
-          "dynamodb:DescribeTable",
-          "dynamodb:Query",
-          "dynamodb:Scan",
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:DeleteItem"
-        ]
-        Resource = aws_dynamodb_table.cache.arn
-        Effect   = "Allow"
-      },
-      {
-        Action = [
-          "sqs:SendMessage",
-          "sqs:ChangeMessageVisibility",
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes"
-        ]
-        Resource = aws_sqs_queue.jobs.arn
-        Effect   = "Allow"
-      },
-    ],
-  })
+    actions = [
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup",
+      "logs:TagResource"
+    ]
+
+    resources = [
+      local.lambda_function_log_group_arn_wildcard
+    ]
+
+    effect = "Allow"
+  }
+
+  statement {
+    sid = "AllowLambdaPutLogEvents"
+
+    actions = [
+      "logs:PutLogEvents"
+    ]
+
+    resources = [
+      "${local.lambda_function_log_group_arn_wildcard}:*"
+    ]
+
+    effect = "Allow"
+  }
+
+  statement {
+    sid = "AllowS3Access"
+
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+
+    resources = [
+      "${data.aws_s3_bucket.main.arn}/*"
+    ]
+
+    effect = "Allow"
+  }
+
+  statement {
+    sid = "AllowDynamoDBAccess"
+
+    actions = [
+      "dynamodb:DescribeTable",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem"
+    ]
+
+    resources = [
+      aws_dynamodb_table.cache.arn
+    ]
+
+    effect = "Allow"
+  }
+
+  statement {
+    sid = "AllowSQSAccess"
+
+    actions = [
+      "sqs:SendMessage",
+      "sqs:ChangeMessageVisibility",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes"
+    ]
+
+    resources = [
+      aws_sqs_queue.jobs.arn
+    ]
+
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_policy" "lambda_execution" {
+  name   = "${local.app_name}-lambda-policy"
+  policy = data.aws_iam_policy_document.lambda_execution.json
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_execution" {
