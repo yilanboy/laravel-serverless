@@ -19,8 +19,9 @@ resource "aws_lambda_function" "web" {
         OCTANE_PERSIST_DATABASE_SESSIONS = "1"
         LOG_CHANNEL                      = "stderr"
         LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
+        CACHE_STORE                      = "dynamodb"
         DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache.name
-        SQS_PREFIX                       = aws_sqs_queue.jobs.url
+        QUEUE_CONNECTION                 = "sqs"
         SQS_QUEUE                        = aws_sqs_queue.jobs.url
       }
     )
@@ -64,8 +65,9 @@ resource "aws_lambda_function" "artisan" {
         BREF_RUNTIME         = "Bref\\ConsoleRuntime\\Main"
         LOG_CHANNEL          = "stderr"
         LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
+        CACHE_STORE          = "dynamodb"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
-        SQS_PREFIX           = aws_sqs_queue.jobs.url
+        QUEUE_CONNECTION     = "sqs"
         SQS_QUEUE            = aws_sqs_queue.jobs.url
       }
     )
@@ -110,8 +112,9 @@ resource "aws_lambda_function" "jobs_worker" {
         BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
         LOG_CHANNEL          = "stderr"
         LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
+        CACHE_STORE          = "dynamodb"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
-        SQS_PREFIX           = aws_sqs_queue.jobs.url
+        QUEUE_CONNECTION     = "sqs"
         SQS_QUEUE            = aws_sqs_queue.jobs.url
       }
     )
