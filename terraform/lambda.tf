@@ -22,8 +22,7 @@ resource "aws_lambda_function" "web" {
         CACHE_STORE                      = "dynamodb"
         DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache.name
         QUEUE_CONNECTION                 = "sqs"
-        SQS_PREFIX                       = "https://sqs.${data.aws_region.current.region}.amazonaws.com/${data.aws_caller_identity.current.account_id}"
-        SQS_QUEUE                        = aws_sqs_queue.jobs.name
+        SQS_QUEUE                        = aws_sqs_queue.jobs.url
       }
     )
   }
@@ -69,8 +68,7 @@ resource "aws_lambda_function" "artisan" {
         CACHE_STORE          = "dynamodb"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
         QUEUE_CONNECTION     = "sqs"
-        SQS_PREFIX           = "https://sqs.${data.aws_region.current.region}.amazonaws.com/${data.aws_caller_identity.current.account_id}"
-        SQS_QUEUE            = aws_sqs_queue.jobs.name
+        SQS_QUEUE            = aws_sqs_queue.jobs.url
       }
     )
   }
@@ -117,8 +115,7 @@ resource "aws_lambda_function" "jobs_worker" {
         CACHE_STORE          = "dynamodb"
         DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
         QUEUE_CONNECTION     = "sqs"
-        SQS_PREFIX           = "https://sqs.${data.aws_region.current.region}.amazonaws.com/${data.aws_caller_identity.current.account_id}"
-        SQS_QUEUE            = aws_sqs_queue.jobs.name
+        SQS_QUEUE            = aws_sqs_queue.jobs.url
       }
     )
   }
