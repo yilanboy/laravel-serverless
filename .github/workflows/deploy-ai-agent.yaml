@@ -84,7 +84,7 @@ jobs:
           bucket="us-west-2-terraform-state-storage"
           key="us-west-2-ai-agent-serverless.tfstate"
           region="us-west-2"
-          dynamodb_table="us-west-2-terraform-state-locking"
+          use_lockfile = true
           EOF
 
           # create terraform.tfvars file
@@ -119,7 +119,7 @@ jobs:
           EOF
 
           # deploy
-          terraform init -backend-config="./terraform.config"
+          terraform init -backend-config="./terraform.config" -migrate-state
           terraform apply -auto-approve
 
       - name: Send deployment status to Telegram
