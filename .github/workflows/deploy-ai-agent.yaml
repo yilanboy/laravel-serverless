@@ -119,7 +119,7 @@ jobs:
           EOF
 
           # deploy
-          terraform init -backend-config="./terraform.config" -migrate-state
+          terraform init -backend-config="./terraform.config"
           terraform apply -auto-approve
 
       - name: Send deployment status to Telegram
