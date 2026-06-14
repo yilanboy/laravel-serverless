@@ -128,7 +128,7 @@ jobs:
           EOF
 
           # deploy
-          terraform init -migrate-state -backend-config="./terraform.config"
+          terraform init -backend-config="./terraform.config"
           terraform apply -auto-approve
 
           # sync front-end assets to s3 bucket
