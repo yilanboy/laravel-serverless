@@ -30,7 +30,7 @@ data "aws_iam_policy" "aws_lambda_vpc_access_execution_role" {
 locals {
   lambda_function_log_group_arn_wildcard = join(":", [
     "arn",
-    data.aws_partition.current.id,
+    data.aws_partition.current.partition,
     "logs",
     data.aws_region.current.region,
     data.aws_caller_identity.current.account_id,
