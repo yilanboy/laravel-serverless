@@ -163,6 +163,10 @@ aws_bucket = "my-app-storage"
 # Lambda
 environment_variables_json_file = "./environment-variables.json"
 filename                        = "./laravel-app.zip"
+
+# Extra Lambda layers (optional) — e.g. a custom GD extension layer.
+# Leave empty for the Bref PHP layer only. See "Custom PHP Extensions" below.
+extra_lambda_layer_arns = []
 ```
 
 ### 4. Deploy

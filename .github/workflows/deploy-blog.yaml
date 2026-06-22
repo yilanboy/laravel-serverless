@@ -117,6 +117,9 @@ jobs:
           environment_variables_json_file = "./environment-variables.json"
 
           filename = "./laravel-app.zip"
+
+          # Custom GD extension layer (arm64, Bref PHP 8.5) — built from ./layers/gd
+          extra_lambda_layer_arns = ["arn:aws:lambda:us-west-2:154471991214:layer:arm-gd-php-85:1"]
           EOF
 
           # deploy
