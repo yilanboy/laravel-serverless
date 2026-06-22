@@ -46,6 +46,12 @@ variable "php_lambda_layer_arn" {
   default = "arn:aws:lambda:us-west-2:873528684822:layer:arm-php-85:16"
 }
 
+variable "extra_lambda_layer_arns" {
+  description = "Additional Lambda layer ARNs to attach alongside the Bref PHP layer (e.g. a custom GD extension layer). Must be arm64 / provided.al2023 compatible. See ./layers/gd to build one."
+  type        = list(string)
+  default     = []
+}
+
 variable "lambda_memory_size" {
   description = "Memory size in MB for all Lambda functions"
   type        = number

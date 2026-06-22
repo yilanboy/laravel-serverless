@@ -8,7 +8,7 @@ resource "aws_lambda_function" "web" {
   timeout          = 28
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
-  layers           = [var.php_lambda_layer_arn]
+  layers           = concat([var.php_lambda_layer_arn], var.extra_lambda_layer_arns)
 
   environment {
     variables = merge(
@@ -56,7 +56,7 @@ resource "aws_lambda_function" "artisan" {
   timeout          = 720
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
-  layers           = [var.php_lambda_layer_arn]
+  layers           = concat([var.php_lambda_layer_arn], var.extra_lambda_layer_arns)
 
   environment {
     variables = merge(
@@ -103,7 +103,7 @@ resource "aws_lambda_function" "jobs_worker" {
   timeout          = 60
   architectures    = ["arm64"]
   role             = aws_iam_role.lambda_execution.arn
-  layers           = [var.php_lambda_layer_arn]
+  layers           = concat([var.php_lambda_layer_arn], var.extra_lambda_layer_arns)
 
   environment {
     variables = merge(
