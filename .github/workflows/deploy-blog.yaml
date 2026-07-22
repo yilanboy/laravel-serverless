@@ -33,6 +33,11 @@ jobs:
         with:
           php-version: "8.5"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: latest
+
       - name: Setup node.js
         uses: actions/setup-node@v6
         with:
@@ -56,8 +61,8 @@ jobs:
           php artisan feed:install
 
           # generate front-end assets
-          npm ci
-          npm run build
+          pnpm install --frozen-lockfile
+          pnpm run build
 
           # remove unnecessary files
           rm -rf node_modules
