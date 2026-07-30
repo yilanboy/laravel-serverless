@@ -8,23 +8,20 @@ AWS Lambda does not natively support PHP. This project uses [Bref](https://bref.
 
 ## Architecture
 
-```text
-                          ┌─────────────────────┐
-                          │    AWS ACM Cert     │
-                          │   (TLS/SSL Cert)    │
-                          └────────┬────────────┘
-                                   │
-User ──→ Custom Domain ──→ API Gateway v2 (HTTP) ──→ Web Lambda (Octane)
-                                                          │
-                                                          ├──→ DynamoDB (Cache)
-                                                          ├──→ S3 (Static Assets / Storage)
-                                                          └──→ SQS (Queue)
-                                                                 │
-                                                          Jobs Worker Lambda ←─┘
-                                                                 │
-                                                          Dead Letter Queue (Failed Retries)
+```mermaid
+flowchart TD
+    User([User]) --> Domain[Custom Domain]
+    ACM[AWS ACM Certificate<br/>TLS/SSL] --> Domain
+    Domain --> API[API Gateway v2<br/>HTTP API]
+    API --> Web[Web Lambda<br/>Octane]
 
-CloudWatch Events (Schedule) ──→ Artisan Lambda (Scheduled Commands)
+    Web --> Cache[DynamoDB<br/>Cache]
+    Web --> Storage[S3<br/>Static Assets / Storage]
+    Web --> Queue[SQS<br/>Queue]
+    Queue --> Worker[Jobs Worker Lambda]
+    Worker --> DLQ[Dead Letter Queue<br/>Failed Retries]
+
+    Schedule[CloudWatch Events<br/>Schedule] --> Artisan[Artisan Lambda<br/>Scheduled Commands]
 ```
 
 ### Lambda Functions
