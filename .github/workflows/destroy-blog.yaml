@@ -1,0 +1,26 @@
+name: Destroy my blog AWS Lambda resources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    uses: ./.github/workflows/_destroy-laravel-template.yaml
+    with:
+      app_name: ${{ vars.BLOG_APP_NAME }}
+      custom_domain_name: ${{ vars.BLOG_CUSTOM_DOMAIN_NAME }}
+      certificate_arn: ${{ vars.BLOG_CERTIFICATE_ARN }}
+      aws_bucket: ${{ vars.BLOG_AWS_BUCKET }}
+      enable_vpc: true
+      subnet_ids: ${{ vars.BLOG_SUBNET_IDS }}
+      security_group_ids: ${{ vars.BLOG_SECURITY_GROUP_IDS }}
+      enable_filesystem: true
+      access_point_arn: ${{ vars.BLOG_ACCESS_POINT_ARN }}
+      tag_service: ${{ vars.BLOG_TAG_SERVICE }}
+      tag_environment: ${{ vars.BLOG_TAG_ENVIRONMENT }}
+      tag_owner: ${{ vars.BLOG_TAG_OWNER }}
+      state_key: "us-west-2-blog-serverless.tfstate"

@@ -1,0 +1,26 @@
+name: Destroy my AI agent AWS Lambda resources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    uses: ./.github/workflows/_destroy-laravel-template.yaml
+    with:
+      app_name: ${{ vars.AI_AGENT_APP_NAME }}
+      custom_domain_name: ${{ vars.AI_AGENT_CUSTOM_DOMAIN_NAME }}
+      certificate_arn: ${{ vars.AI_AGENT_CERTIFICATE_ARN }}
+      aws_bucket: ${{ vars.AI_AGENT_AWS_BUCKET }}
+      enable_vpc: true
+      subnet_ids: ${{ vars.AI_AGENT_SUBNET_IDS }}
+      security_group_ids: ${{ vars.AI_AGENT_SECURITY_GROUP_IDS }}
+      enable_filesystem: true
+      access_point_arn: ${{ vars.AI_AGENT_ACCESS_POINT_ARN }}
+      tag_service: ${{ vars.AI_AGENT_TAG_SERVICE }}
+      tag_environment: ${{ vars.AI_AGENT_TAG_ENVIRONMENT }}
+      tag_owner: ${{ vars.AI_AGENT_TAG_OWNER }}
+      state_key: "us-west-2-ai-agent-serverless.tfstate"

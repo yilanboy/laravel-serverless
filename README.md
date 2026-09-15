@@ -63,10 +63,14 @@ laravel-serverless/
 │       └── laravel_compute/# Web (Octane), Artisan (Scheduler), Worker Lambdas + IAM + CloudWatch
 └── .github/
     └── workflows/
-        ├── _deploy-laravel-template.yaml # Reusable GitHub Actions deployment template
-        ├── deploy-blog.yaml              # Blog deployment workflow
-        ├── deploy-cms.yaml               # CMS deployment workflow
-        └── deploy-ai-agent.yaml          # AI Agent deployment workflow
+        ├── _deploy-laravel-template.yaml  # Reusable deployment template
+        ├── _destroy-laravel-template.yaml # Reusable destruction template
+        ├── deploy-blog.yaml               # Deploy Blog
+        ├── destroy-blog.yaml              # Destroy Blog
+        ├── deploy-cms.yaml                # Deploy CMS
+        ├── destroy-cms.yaml               # Destroy CMS
+        ├── deploy-ai-agent.yaml           # Deploy AI Agent
+        └── destroy-ai-agent.yaml          # Destroy AI Agent
 ```
 
 ## Prerequisites
@@ -243,6 +247,15 @@ jobs:
       extra_artisan_pre_build: "" # Optional extra commands, e.g. "php artisan migrate --force"
       ssm_parameter_name: "/your-app/env" # AWS SSM Parameter Store path containing JSON env vars
 ```
+
+### Destroying a Laravel App (銷毀對應資源)
+
+To tear down and destroy all AWS resources for a specific application without manual CLI steps, trigger the corresponding `destroy-<app>.yaml` workflow via GitHub Actions:
+- `destroy-blog.yaml`
+- `destroy-cms.yaml`
+- `destroy-ai-agent.yaml`
+
+These workflows use the reusable template `_destroy-laravel-template.yaml` to run `terraform destroy -auto-approve` against the designated state file.
 
 ## Environment Variables
 

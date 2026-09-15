@@ -1,0 +1,138 @@
+name: Reusable Laravel Serverless Destroy
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        description: "Application name used for resource naming"
+        required: true
+        type: string
+      custom_domain_name:
+        description: "Custom domain name for the API Gateway"
+        required: true
+        type: string
+      certificate_arn:
+        description: "ACM Certificate ARN for the custom domain"
+        required: true
+        type: string
+      aws_bucket:
+        description: "S3 bucket for Laravel storage/blobs"
+        required: true
+        type: string
+      enable_vpc:
+        description: "Whether to attach Lambda functions to a VPC"
+        required: false
+        type: boolean
+        default: true
+      subnet_ids:
+        description: "List of subnet IDs in JSON format, e.g. '[\"subnet-xxx\"]'"
+        required: false
+        type: string
+        default: "[]"
+      security_group_ids:
+        description: "List of security group IDs in JSON format, e.g. '[\"sg-xxx\"]'"
+        required: false
+        type: string
+        default: "[]"
+      enable_filesystem:
+        description: "Whether to mount EFS to Lambda functions"
+        required: false
+        type: boolean
+        default: true
+      access_point_arn:
+        description: "ARN of the EFS access point"
+        required: false
+        type: string
+        default: ""
+      tag_service:
+        description: "Service tag"
+        required: false
+        type: string
+        default: ""
+      tag_environment:
+        description: "Environment tag"
+        required: false
+        type: string
+        default: "production"
+      tag_owner:
+        description: "Owner tag"
+        required: false
+        type: string
+        default: "Allen"
+      aws_region:
+        description: "AWS region"
+        required: false
+        type: string
+        default: "us-west-2"
+      state_bucket:
+        description: "S3 bucket storing Terraform state"
+        required: false
+        type: string
+        default: "us-west-2-terraform-state-storage"
+      state_key:
+        description: "Terraform state key (defaults to us-west-2-<app_name>-serverless.tfstate)"
+        required: false
+        type: string
+        default: ""
+      aws_role_arn:
+        description: "AWS IAM Role ARN to assume via GitHub OIDC"
+        required: false
+        type: string
+        default: "arn:aws:iam::154471991214:role/github_action"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy-laravel-resources:
+    name: Destroy AWS Lambda Resources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ inputs.aws_role_arn }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Prepare Dummy Zip for Terraform Destroy
+        run: |
+          mkdir -p terraform
+          touch terraform/laravel-app.zip
+
+      - name: Destroy with Terraform
+        working-directory: terraform
+        env:
+          TF_VAR_app_name: ${{ inputs.app_name }}
+          TF_VAR_aws_region: ${{ inputs.aws_region }}
+          TF_VAR_tag_service: ${{ inputs.tag_service != '' && inputs.tag_service || inputs.app_name }}
+          TF_VAR_tag_environment: ${{ inputs.tag_environment }}
+          TF_VAR_tag_owner: ${{ inputs.tag_owner }}
+          TF_VAR_custom_domain_name: ${{ inputs.custom_domain_name }}
+          TF_VAR_certificate_arn: ${{ inputs.certificate_arn }}
+          TF_VAR_aws_bucket: ${{ inputs.aws_bucket }}
+          TF_VAR_enable_vpc: ${{ inputs.enable_vpc }}
+          TF_VAR_subnet_ids: ${{ inputs.subnet_ids }}
+          TF_VAR_security_group_ids: ${{ inputs.security_group_ids }}
+          TF_VAR_enable_filesystem: ${{ inputs.enable_filesystem }}
+          TF_VAR_access_point_arn: ${{ inputs.access_point_arn }}
+          TF_VAR_filename: "./laravel-app.zip"
+        run: |
+          STATE_KEY="${{ inputs.state_key }}"
+          if [ -z "$STATE_KEY" ]; then
+            STATE_KEY="us-west-2-${{ inputs.app_name }}-serverless.tfstate"
+          fi
+
+          terraform init \
+            -backend-config="bucket=${{ inputs.state_bucket }}" \
+            -backend-config="key=${STATE_KEY}" \
+            -backend-config="region=${{ inputs.aws_region }}" \
+            -backend-config="use_lockfile=true"
+
+          terraform destroy -auto-approve
