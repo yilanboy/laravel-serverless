@@ -7,96 +7,116 @@ on:
         description: "Application name used for resource naming"
         required: true
         type: string
+
       github_repo_url:
         description: "GitHub repository URL of the Laravel application"
         required: true
         type: string
+
       custom_domain_name:
         description: "Custom domain name for the API Gateway"
         required: true
         type: string
+
       certificate_arn:
         description: "ACM Certificate ARN for the custom domain"
         required: true
         type: string
+
       aws_bucket:
         description: "S3 bucket for Laravel storage/blobs"
         required: true
         type: string
+
       asset_bucket:
         description: "S3 bucket for public static assets (leave empty to skip asset sync)"
         required: false
         type: string
         default: ""
+
       enable_vpc:
         description: "Whether to attach Lambda functions to a VPC"
         required: false
         type: boolean
         default: true
+
       subnet_ids:
-        description: "List of subnet IDs in JSON format, e.g. '[\"subnet-xxx\"]'"
+        description: 'List of subnet IDs in JSON format, e.g. ''["subnet-xxx"]'''
         required: false
         type: string
         default: "[]"
+
       security_group_ids:
-        description: "List of security group IDs in JSON format, e.g. '[\"sg-xxx\"]'"
+        description: 'List of security group IDs in JSON format, e.g. ''["sg-xxx"]'''
         required: false
         type: string
         default: "[]"
+
       enable_filesystem:
         description: "Whether to mount EFS to Lambda functions"
         required: false
         type: boolean
         default: true
+
       access_point_arn:
         description: "ARN of the EFS access point"
         required: false
         type: string
         default: ""
+
       tag_service:
         description: "Service tag"
         required: false
         type: string
         default: ""
+
       tag_environment:
         description: "Environment tag"
         required: false
         type: string
         default: "production"
+
       tag_owner:
         description: "Owner tag"
         required: false
         type: string
         default: "Allen"
+
       extra_artisan_pre_build:
         description: "Additional bash commands to run before frontend build (e.g. php artisan feed:install)"
         required: false
         type: string
         default: ""
+
       php_version:
         description: "PHP version to use"
         required: false
         type: string
         default: "8.5"
+
       aws_region:
         description: "AWS region"
         required: false
         type: string
         default: "us-west-2"
+
       state_bucket:
         description: "S3 bucket storing Terraform state"
         required: false
         type: string
         default: "us-west-2-terraform-state-storage"
+
       ssm_parameter_name:
         description: "AWS SSM Parameter Store name containing the Laravel JSON environment variables"
         required: true
         type: string
+
       state_key:
         description: "Terraform state key (defaults to us-west-2-<app_name>-serverless.tfstate)"
         required: false
         type: string
         default: ""
+
       aws_role_arn:
         description: "AWS IAM Role ARN to assume via GitHub OIDC"
         required: false
@@ -120,19 +140,6 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_role_arn }}
           aws-region: ${{ inputs.aws_region }}
-
-      - name: Fetch Environment Variables from AWS SSM Parameter Store
-        run: |
-          ENV_JSON=$(aws ssm get-parameter \
-            --name "${{ inputs.ssm_parameter_name }}" \
-            --with-decryption \
-            --query "Parameter.Value" \
-            --output text)
-
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "LARAVEL_ENV_JSON<<$EOF" >> "$GITHUB_ENV"
-          echo "$ENV_JSON" >> "$GITHUB_ENV"
-          echo "$EOF" >> "$GITHUB_ENV"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -204,7 +211,7 @@ jobs:
           TF_VAR_enable_filesystem: ${{ inputs.enable_filesystem }}
           TF_VAR_access_point_arn: ${{ inputs.access_point_arn }}
           TF_VAR_filename: "./laravel-app.zip"
-          TF_VAR_laravel_env_vars: ${{ env.LARAVEL_ENV_JSON }}
+          TF_VAR_ssm_parameter_name: ${{ inputs.ssm_parameter_name }}
         run: |
           STATE_KEY="${{ inputs.state_key }}"
           if [ -z "$STATE_KEY" ]; then

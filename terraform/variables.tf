@@ -124,15 +124,8 @@ variable "app_name" {
 #
 # Lambda environment variables
 #
-variable "laravel_env_vars" {
-  description = "Map of application environment variables for Laravel"
-  type        = map(string)
-  default     = {}
-  sensitive   = true
-}
-
-variable "environment_variables_json_file" {
-  description = "Path to the JSON file containing environment variables for backwards compatibility"
+variable "ssm_parameter_name" {
+  description = "AWS SSM Parameter Store name containing the Laravel JSON environment variables"
   type        = string
   default     = ""
 }

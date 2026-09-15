@@ -165,8 +165,8 @@ tag_owner       = "team-name"
 aws_bucket = "my-app-storage"
 
 # Lambda
-environment_variables_json_file = "./environment-variables.json"
-filename                        = "./laravel-app.zip"
+ssm_parameter_name = "/docfunc/env"
+filename           = "./laravel-app.zip"
 
 # Extra Lambda layers (optional) — e.g. a custom GD extension layer.
 # Leave empty for the Bref PHP layer only. See "Custom PHP Extensions" below.
@@ -270,9 +270,9 @@ Application environment variables (such as `APP_KEY`, `DB_PASSWORD`, API secrets
 | **AI Agent** | `/ai-agent/env` |
 
 **How it works during deployment**:
-1. In GitHub Actions, the deployment runner fetches the decrypted JSON string from AWS SSM via AWS CLI.
-2. The secret value is masked in CI logs via `::add-mask::`.
-3. The JSON string is injected into Terraform's `TF_VAR_laravel_env_vars` sensitive variable.
+1. In GitHub Actions, only the parameter path (e.g. `/ai-agent/env`) is passed as `TF_VAR_ssm_parameter_name`. No shell scripts or CLI fetching are needed in CI.
+2. Terraform natively fetches the decrypted JSON via `data "aws_ssm_parameter"` and decodes it via `jsondecode()`.
+3. The resulting environment variables are injected into Lambda's environment variables.
 4. **Zero Cold-Start Overhead**: Lambda environment variables are baked in during deployment. Lambda does not need runtime SSM permissions and incurs 0ms cold-start API latency.
 
 ### Infrastructure Environment Variables (Auto-injected)
@@ -288,9 +288,8 @@ The following environment variables are automatically injected by Terraform into
 | `LOG_CHANNEL`                      | Log channel (stderr)                           | All    |
 | `LOG_STDERR_FORMATTER`             | CloudWatch-compatible log formatter            | All    |
 
-Application environment variables can be provided in two ways:
-1. **Via `laravel_env_vars` (Recommended in CI)**: Pass a JSON string to `TF_VAR_laravel_env_vars`. Terraform automatically parses it as a sensitive `map(string)`.
-2. **Via `environment_variables_json_file` (Local / File-based)**: Path to a JSON file containing key-value pairs (maintained for backwards compatibility).
+Application environment variables are managed securely via AWS SSM Parameter Store:
+- **AWS SSM Parameter Store (`ssm_parameter_name`)**: Pass the SSM parameter path (e.g. `/docfunc/env`). Terraform natively fetches and decodes the JSON values at plan/apply time via `data "aws_ssm_parameter"`.
 
 ## Notes
 

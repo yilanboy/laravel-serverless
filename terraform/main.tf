@@ -1,9 +1,7 @@
 locals {
   app_name = lower(replace(var.app_name, "/[^A-Za-z0-9]/", "-"))
 
-  resolved_laravel_env_vars = length(var.laravel_env_vars) > 0 ? var.laravel_env_vars : (
-    var.environment_variables_json_file != "" && fileexists(var.environment_variables_json_file) ? jsondecode(file(var.environment_variables_json_file)) : {}
-  )
+  resolved_laravel_env_vars = var.ssm_parameter_name != "" ? jsondecode(data.aws_ssm_parameter.env[0].value) : {}
 }
 
 resource "random_string" "resource_suffix" {
