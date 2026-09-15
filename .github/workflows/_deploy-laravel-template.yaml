@@ -129,8 +129,10 @@ jobs:
             --query "Parameter.Value" \
             --output text)
 
-          echo "::add-mask::$ENV_JSON"
-          echo "LARAVEL_ENV_JSON=$ENV_JSON" >> "$GITHUB_ENV"
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "LARAVEL_ENV_JSON<<$EOF" >> "$GITHUB_ENV"
+          echo "$ENV_JSON" >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
