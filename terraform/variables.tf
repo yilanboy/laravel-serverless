@@ -47,7 +47,7 @@ variable "php_lambda_layer_arn" {
 }
 
 variable "extra_lambda_layer_arns" {
-  description = "Additional Lambda layer ARNs to attach alongside the Bref PHP layer (e.g. a custom GD extension layer). Must be arm64 / provided.al2023 compatible. See ./layers/gd to build one."
+  description = "Additional Lambda layer ARNs to attach alongside the Bref PHP layer (e.g. a custom GD extension layer). Must be arm64 / provided.al2023 compatible."
   type        = list(string)
   default     = []
 }
@@ -124,9 +124,17 @@ variable "app_name" {
 #
 # Lambda environment variables
 #
+variable "laravel_env_vars" {
+  description = "Map of application environment variables for Laravel"
+  type        = map(string)
+  default     = {}
+  sensitive   = true
+}
+
 variable "environment_variables_json_file" {
-  description = "Path to the JSON file containing environment variables for the Lambda function."
+  description = "Path to the JSON file containing environment variables for backwards compatibility"
   type        = string
+  default     = ""
 }
 
 #

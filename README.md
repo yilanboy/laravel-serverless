@@ -50,20 +50,23 @@ flowchart TD
 ```text
 laravel-serverless/
 ├── terraform/
-│   ├── api_gateway.tf  # API Gateway v2 (HTTP) configuration
-│   ├── cloudwatch.tf   # CloudWatch log groups
-│   ├── data.tf         # Data sources (AWS account/region info, S3 bucket)
-│   ├── dynamodb.tf     # DynamoDB cache table
-│   ├── iam.tf          # IAM roles and policies for Lambda
-│   ├── lambda.tf       # Lambda function definitions
-│   ├── locals.tf       # Local values (normalizes app_name)
-│   ├── outputs.tf      # Outputs (Lambda ARNs, API URL, SQS queue URLs)
-│   ├── provider.tf     # AWS provider configuration (region, default tags)
-│   ├── sqs.tf          # SQS queue and Dead Letter Queue
-│   ├── terraform.tf    # Terraform version constraints and S3 backend
-│   └── variables.tf    # Input variable declarations
+│   ├── main.tf             # Orchestrator combining all submodules
+│   ├── data.tf             # Shared data sources (Caller identity, S3 bucket)
+│   ├── provider.tf         # AWS provider configuration
+│   ├── terraform.tf        # Terraform version constraints and S3 backend
+│   ├── variables.tf        # Input variable declarations (supports TF_VAR_*)
+│   ├── outputs.tf          # Stack outputs from submodules
+│   └── modules/
+│       ├── api_gateway/    # HTTP API, custom domain, ACM, integrations & routes
+│       ├── dynamodb_cache/ # DynamoDB cache table with TTL
+│       ├── sqs_queue/      # SQS job queue & Dead Letter Queue (DLQ)
+│       └── laravel_compute/# Web (Octane), Artisan (Scheduler), Worker Lambdas + IAM + CloudWatch
 └── .github/
-    └── workflows/      # GitHub Actions deployment workflows
+    └── workflows/
+        ├── _deploy-laravel-template.yaml # Reusable GitHub Actions deployment template
+        ├── deploy-blog.yaml              # Blog deployment workflow
+        ├── deploy-cms.yaml               # CMS deployment workflow
+        └── deploy-ai-agent.yaml          # AI Agent deployment workflow
 ```
 
 ## Prerequisites
@@ -208,9 +211,60 @@ arn:aws:lambda:us-west-2:873528684822:layer:arm-php-85:12
 
 Override via the `php_lambda_layer_arn` variable in `terraform.tfvars`.
 
+## Deploying a New Laravel App (新增一個 Workflow 即可)
+
+This repository acts as a centralized serverless deployment engine. To deploy a new Laravel application, you only need to create a new workflow file under `.github/workflows/deploy-<app>.yaml`:
+
+```yaml
+name: Deploy New App to AWS Lambda
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-laravel-template.yaml
+    with:
+      app_name: ${{ vars.NEW_APP_NAME }}
+      github_repo_url: ${{ vars.NEW_APP_GITHUB_URL }}
+      custom_domain_name: ${{ vars.NEW_APP_CUSTOM_DOMAIN_NAME }}
+      certificate_arn: ${{ vars.NEW_APP_CERTIFICATE_ARN }}
+      aws_bucket: ${{ vars.NEW_APP_AWS_BUCKET }}
+      asset_bucket: ${{ vars.NEW_APP_ASSET_AWS_BUCKET }} # Optional: skip if no static sync
+      enable_vpc: true
+      subnet_ids: ${{ vars.NEW_APP_SUBNET_IDS }}
+      security_group_ids: ${{ vars.NEW_APP_SECURITY_GROUP_IDS }}
+      enable_filesystem: true
+      access_point_arn: ${{ vars.NEW_APP_ACCESS_POINT_ARN }}
+      extra_artisan_pre_build: "" # Optional extra commands, e.g. "php artisan migrate --force"
+      ssm_parameter_name: "/your-app/env" # AWS SSM Parameter Store path containing JSON env vars
+```
+
 ## Environment Variables
 
-The following environment variables are automatically injected by Terraform — no manual configuration needed:
+### Application Environment Variables (AWS SSM Parameter Store)
+
+Application environment variables (such as `APP_KEY`, `DB_PASSWORD`, API secrets) are securely stored in **AWS Systems Manager (SSM) Parameter Store** as `SecureString` containing JSON:
+
+| Application | SSM Parameter Store Path |
+| :--- | :--- |
+| **Blog** | `/docfunc/env` |
+| **CMS** | `/cms.docfunc/env` |
+| **AI Agent** | `/ai-agent/env` |
+
+**How it works during deployment**:
+1. In GitHub Actions, the deployment runner fetches the decrypted JSON string from AWS SSM via AWS CLI.
+2. The secret value is masked in CI logs via `::add-mask::`.
+3. The JSON string is injected into Terraform's `TF_VAR_laravel_env_vars` sensitive variable.
+4. **Zero Cold-Start Overhead**: Lambda environment variables are baked in during deployment. Lambda does not need runtime SSM permissions and incurs 0ms cold-start API latency.
+
+### Infrastructure Environment Variables (Auto-injected)
+
+The following environment variables are automatically injected by Terraform into Lambda — no manual configuration needed:
 
 | Variable                           | Description                                    | Lambda |
 | ---------------------------------- | ---------------------------------------------- | ------ |
@@ -221,7 +275,9 @@ The following environment variables are automatically injected by Terraform — 
 | `LOG_CHANNEL`                      | Log channel (stderr)                           | All    |
 | `LOG_STDERR_FORMATTER`             | CloudWatch-compatible log formatter            | All    |
 
-All other environment variables (database credentials, `APP_KEY`, etc.) are loaded from the JSON file specified by `environment_variables_json_file`.
+Application environment variables can be provided in two ways:
+1. **Via `laravel_env_vars` (Recommended in CI)**: Pass a JSON string to `TF_VAR_laravel_env_vars`. Terraform automatically parses it as a sensitive `map(string)`.
+2. **Via `environment_variables_json_file` (Local / File-based)**: Path to a JSON file containing key-value pairs (maintained for backwards compatibility).
 
 ## Notes
 

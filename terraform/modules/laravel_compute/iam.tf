@@ -1,9 +1,9 @@
-data "aws_s3_bucket" "main" {
-  bucket = var.aws_bucket
-}
+data "aws_partition" "current" {}
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 resource "aws_iam_role" "lambda_execution" {
-  name = "${local.app_name}-lambda-role"
+  name = "${var.app_name}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -35,7 +35,7 @@ locals {
     data.aws_region.current.region,
     data.aws_caller_identity.current.account_id,
     "log-group",
-    "/aws/lambda/${local.app_name}*",
+    "/aws/lambda/${var.app_name}*",
     "*"
   ])
 }
@@ -81,7 +81,7 @@ data "aws_iam_policy_document" "lambda_execution" {
     ]
 
     resources = [
-      "${data.aws_s3_bucket.main.arn}/*"
+      "${var.aws_bucket_arn}/*"
     ]
 
     effect = "Allow"
@@ -101,7 +101,7 @@ data "aws_iam_policy_document" "lambda_execution" {
     ]
 
     resources = [
-      aws_dynamodb_table.cache.arn
+      var.dynamodb_table_arn
     ]
 
     effect = "Allow"
@@ -119,7 +119,7 @@ data "aws_iam_policy_document" "lambda_execution" {
     ]
 
     resources = [
-      aws_sqs_queue.jobs.arn
+      var.sqs_queue_arn
     ]
 
     effect = "Allow"
@@ -127,7 +127,7 @@ data "aws_iam_policy_document" "lambda_execution" {
 }
 
 resource "aws_iam_policy" "lambda_execution" {
-  name   = "${local.app_name}-lambda-policy"
+  name   = "${var.app_name}-lambda-policy"
   policy = data.aws_iam_policy_document.lambda_execution.json
 }
 

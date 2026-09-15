@@ -1,9 +1,9 @@
 resource "aws_lambda_function" "web" {
   filename         = var.filename
-  source_code_hash = filesha256(var.filename)
+  source_code_hash = fileexists(var.filename) ? filesha256(var.filename) : null
   handler          = "Bref\\LaravelBridge\\Http\\OctaneHandler"
   runtime          = var.lambda_runtime
-  function_name    = "${local.app_name}-web"
+  function_name    = "${var.app_name}-web"
   memory_size      = var.lambda_memory_size
   timeout          = 28
   architectures    = ["arm64"]
@@ -12,7 +12,7 @@ resource "aws_lambda_function" "web" {
 
   environment {
     variables = merge(
-      jsondecode(file(var.environment_variables_json_file)),
+      var.laravel_env_vars,
       {
         BREF_RUNTIME                     = "Bref\\FunctionRuntime\\Main"
         BREF_LOOP_MAX                    = "250"
@@ -20,9 +20,9 @@ resource "aws_lambda_function" "web" {
         LOG_CHANNEL                      = "stderr"
         LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
         CACHE_STORE                      = "dynamodb"
-        DYNAMODB_CACHE_TABLE             = aws_dynamodb_table.cache.name
+        DYNAMODB_CACHE_TABLE             = var.dynamodb_table_name
         QUEUE_CONNECTION                 = "sqs"
-        SQS_QUEUE                        = aws_sqs_queue.jobs.url
+        SQS_QUEUE                        = var.sqs_queue_url
       }
     )
   }
@@ -38,7 +38,6 @@ resource "aws_lambda_function" "web" {
 
   dynamic "file_system_config" {
     for_each = var.enable_filesystem ? ["apply"] : []
-
     content {
       arn              = var.access_point_arn
       local_mount_path = "/mnt/efs"
@@ -48,10 +47,10 @@ resource "aws_lambda_function" "web" {
 
 resource "aws_lambda_function" "artisan" {
   filename         = var.filename
-  source_code_hash = filesha256(var.filename)
+  source_code_hash = fileexists(var.filename) ? filesha256(var.filename) : null
   handler          = "artisan"
   runtime          = var.lambda_runtime
-  function_name    = "${local.app_name}-artisan"
+  function_name    = "${var.app_name}-artisan"
   memory_size      = var.lambda_memory_size
   timeout          = 720
   architectures    = ["arm64"]
@@ -60,22 +59,21 @@ resource "aws_lambda_function" "artisan" {
 
   environment {
     variables = merge(
-      jsondecode(file(var.environment_variables_json_file)),
+      var.laravel_env_vars,
       {
         BREF_RUNTIME         = "Bref\\ConsoleRuntime\\Main"
         LOG_CHANNEL          = "stderr"
         LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
         CACHE_STORE          = "dynamodb"
-        DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
+        DYNAMODB_CACHE_TABLE = var.dynamodb_table_name
         QUEUE_CONNECTION     = "sqs"
-        SQS_QUEUE            = aws_sqs_queue.jobs.url
+        SQS_QUEUE            = var.sqs_queue_url
       }
     )
   }
 
   dynamic "vpc_config" {
     for_each = var.enable_vpc ? ["apply"] : []
-
     content {
       subnet_ids                  = var.subnet_ids
       security_group_ids          = var.security_group_ids
@@ -85,7 +83,6 @@ resource "aws_lambda_function" "artisan" {
 
   dynamic "file_system_config" {
     for_each = var.enable_filesystem ? ["apply"] : []
-
     content {
       arn              = var.access_point_arn
       local_mount_path = "/mnt/efs"
@@ -95,10 +92,10 @@ resource "aws_lambda_function" "artisan" {
 
 resource "aws_lambda_function" "jobs_worker" {
   filename         = var.filename
-  source_code_hash = filesha256(var.filename)
+  source_code_hash = fileexists(var.filename) ? filesha256(var.filename) : null
   handler          = "Bref\\LaravelBridge\\Queue\\QueueHandler"
   runtime          = var.lambda_runtime
-  function_name    = "${local.app_name}-jobs-worker"
+  function_name    = "${var.app_name}-jobs-worker"
   memory_size      = var.lambda_memory_size
   timeout          = 60
   architectures    = ["arm64"]
@@ -107,22 +104,21 @@ resource "aws_lambda_function" "jobs_worker" {
 
   environment {
     variables = merge(
-      jsondecode(file(var.environment_variables_json_file)),
+      var.laravel_env_vars,
       {
         BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
         LOG_CHANNEL          = "stderr"
         LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
         CACHE_STORE          = "dynamodb"
-        DYNAMODB_CACHE_TABLE = aws_dynamodb_table.cache.name
+        DYNAMODB_CACHE_TABLE = var.dynamodb_table_name
         QUEUE_CONNECTION     = "sqs"
-        SQS_QUEUE            = aws_sqs_queue.jobs.url
+        SQS_QUEUE            = var.sqs_queue_url
       }
     )
   }
 
   dynamic "vpc_config" {
     for_each = var.enable_vpc ? ["apply"] : []
-
     content {
       subnet_ids                  = var.subnet_ids
       security_group_ids          = var.security_group_ids
@@ -132,7 +128,6 @@ resource "aws_lambda_function" "jobs_worker" {
 
   dynamic "file_system_config" {
     for_each = var.enable_filesystem ? ["apply"] : []
-
     content {
       arn              = var.access_point_arn
       local_mount_path = "/mnt/efs"
@@ -150,7 +145,7 @@ resource "aws_lambda_permission" "artisan_events_rule_schedule" {
 resource "aws_lambda_event_source_mapping" "jobs_worker_sqs" {
   batch_size                         = 1
   maximum_batching_window_in_seconds = 0
-  event_source_arn                   = aws_sqs_queue.jobs.arn
+  event_source_arn                   = var.sqs_queue_arn
   function_name                      = aws_lambda_function.jobs_worker.function_name
   enabled                            = true
   bisect_batch_on_function_error     = false

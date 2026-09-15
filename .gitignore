@@ -5,3 +5,4 @@
 terraform.tfvars
 terraform.config
 *.zip
+.DS_Store
