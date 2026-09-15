@@ -26,5 +26,6 @@ jobs:
       tag_environment: ${{ vars.BLOG_TAG_ENVIRONMENT }}
       tag_owner: ${{ vars.BLOG_TAG_OWNER }}
       extra_artisan_pre_build: "php artisan feed:install"
+      extra_lambda_layer_arns: '["arn:aws:lambda:us-west-2:154471991214:layer:arm-php-85-gd:3"]'
       ssm_parameter_name: "/docfunc/env"
       state_key: "us-west-2-blog-serverless.tfstate"

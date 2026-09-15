@@ -88,6 +88,12 @@ on:
         type: string
         default: ""
 
+      extra_lambda_layer_arns:
+        description: "Additional Lambda layer ARNs in JSON list format"
+        required: false
+        type: string
+        default: "[]"
+
       php_version:
         description: "PHP version to use"
         required: false
@@ -210,6 +216,7 @@ jobs:
           TF_VAR_security_group_ids: ${{ inputs.security_group_ids }}
           TF_VAR_enable_filesystem: ${{ inputs.enable_filesystem }}
           TF_VAR_access_point_arn: ${{ inputs.access_point_arn }}
+          TF_VAR_extra_lambda_layer_arns: ${{ inputs.extra_lambda_layer_arns }}
           TF_VAR_filename: "./laravel-app.zip"
           TF_VAR_ssm_parameter_name: ${{ inputs.ssm_parameter_name }}
         run: |
