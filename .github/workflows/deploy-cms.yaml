@@ -25,6 +25,6 @@ jobs:
       tag_service: ${{ vars.CMS_TAG_SERVICE }}
       tag_environment: ${{ vars.CMS_TAG_ENVIRONMENT }}
       tag_owner: ${{ vars.CMS_TAG_OWNER }}
-      extra_artisan_pre_build: "php artisan optimize && php artisan migrate --force && php artisan wayfinder:generate"
+      extra_artisan_pre_build: "php artisan migrate --force && php artisan wayfinder:generate && php artisan optimize:clear"
       ssm_parameter_name: "/docfunc-cms/env"
       state_key: "us-west-2-blog-cms-serverless.tfstate"
