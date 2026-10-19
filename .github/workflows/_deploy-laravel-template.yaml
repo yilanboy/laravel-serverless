@@ -183,9 +183,19 @@ jobs:
             ${{ inputs.extra_artisan_pre_build }}
           fi
 
-          # Build frontend assets with pnpm
-          pnpm install --frozen-lockfile
-          pnpm run build
+          # Build frontend assets, picking the package manager from the lockfile
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile
+            pnpm run build
+          elif [ -f package-lock.json ]; then
+            npm ci
+            npm run build
+          elif [ -f package.json ]; then
+            echo "::error::package.json present but no pnpm-lock.yaml or package-lock.json found"
+            exit 1
+          else
+            echo "no package.json, skipping frontend build"
+          fi
 
           # Remove unnecessary files before packaging
           rm -rf node_modules
