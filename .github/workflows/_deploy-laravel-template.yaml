@@ -175,9 +175,9 @@ jobs:
           php artisan config:clear
 
           # Run extra pre-build commands if specified
-          # The ':' no-op keeps the block valid when the input is empty,
-          # since ${{ }} is substituted at the YAML layer and would
-          # otherwise leave 'then' with no commands.
+          # The ':' no-op keeps the block valid when the input is empty.
+          # Actions substitutes the input at the YAML layer, so an unset
+          # value would otherwise leave 'then' with no commands.
           if [ -n "${{ inputs.extra_artisan_pre_build }}" ]; then
             :
             ${{ inputs.extra_artisan_pre_build }}
