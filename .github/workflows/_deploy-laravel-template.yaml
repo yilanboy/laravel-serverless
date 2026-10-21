@@ -211,10 +211,6 @@ jobs:
           rm -rf .github
           rm -f database/database.sqlite
 
-          # Inject custom php.ini configuration (security patches)
-          mkdir -p php/conf.d
-          echo "session.upload_progress.enabled = Off" > php/conf.d/security.ini
-
           # Zip the laravel app
           zip --quiet --recurse-paths --symlinks "../terraform/laravel-app.zip" .
 
