@@ -100,6 +100,10 @@ npm ci && npm run build
 # Remove unnecessary files
 rm -rf node_modules tests storage .git .github
 
+# Configure custom php.ini settings (security hardening)
+mkdir -p php/conf.d
+echo "session.upload_progress.enabled = Off" > php/conf.d/security.ini
+
 # Create the deployment zip
 zip --quiet --recurse-paths --symlinks "../laravel-app.zip" .
 cd ..
