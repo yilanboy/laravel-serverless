@@ -10,18 +10,21 @@ AWS Lambda does not natively support PHP. This project uses [Bref](https://bref.
 
 ```mermaid
 flowchart TD
-    User([User]) --> Domain[Custom Domain]
-    ACM[AWS ACM Certificate<br/>TLS/SSL] --> Domain
-    Domain --> API[API Gateway v2<br/>HTTP API]
-    API --> Web[Web Lambda<br/>Octane]
+    User(["User"]) --> Domain["Custom Domain"]
+    ACM["AWS ACM Certificate - TLS/SSL"] --> Domain
+    Domain --> API["API Gateway v2 - HTTP API"]
+    API --> Web["Web Lambda - Octane (No VPC)"]
 
-    Web --> Cache[DynamoDB<br/>Cache]
-    Web --> Storage[S3<br/>Static Assets / Storage]
-    Web --> Queue[SQS<br/>Queue]
-    Queue --> Worker[Jobs Worker Lambda]
-    Worker --> DLQ[Dead Letter Queue<br/>Failed Retries]
+    Web --> DSQL[("Amazon Aurora DSQL - PostgreSQL")]
+    Web --> Cache["DynamoDB Cache"]
+    Web --> Storage["S3 Static Assets and Storage"]
+    Web --> Queue["SQS Queue"]
+    Queue --> Worker["Jobs Worker Lambda (No VPC)"]
+    Worker --> DSQL
+    Worker --> DLQ["Dead Letter Queue"]
 
-    Schedule[CloudWatch Events<br/>Schedule] --> Artisan[Artisan Lambda<br/>Scheduled Commands]
+    Schedule["CloudWatch Events Schedule"] --> Artisan["Artisan Lambda (No VPC)"]
+    Artisan --> DSQL
 ```
 
 ### Lambda Functions
@@ -41,9 +44,8 @@ flowchart TD
 | **DynamoDB**              | Laravel cache driver (with TTL auto-expiration) |
 | **SQS**                   | Laravel queue driver with Dead Letter Queue     |
 | **CloudWatch Logs**       | Log group per Lambda (1-day retention)          |
-| **S3**                    | Static assets (CSS/JS) and file storage         |
-| **VPC** (optional)        | Access VPC resources (e.g., RDS databases)      |
-| **EFS** (optional)        | Persistent filesystem mounted at `/mnt/efs`     |
+| **S3**                    | Static assets (CSS/JS) and file storage                  |
+| **Amazon Aurora DSQL**    | Serverless PostgreSQL-compatible database (IAM auth)     |
 
 ## File Structure
 
@@ -68,9 +70,7 @@ laravel-serverless/
         ├── deploy-blog.yaml               # Deploy Blog
         ├── destroy-blog.yaml              # Destroy Blog
         ├── deploy-cms.yaml                # Deploy CMS
-        ├── destroy-cms.yaml               # Destroy CMS
-        ├── deploy-ai-agent.yaml           # Deploy AI Agent
-        └── destroy-ai-agent.yaml          # Destroy AI Agent
+        └── destroy-cms.yaml               # Destroy CMS
 ```
 
 ## Prerequisites
@@ -120,16 +120,11 @@ Create `environment-variables.json` with your Laravel environment variables:
   "APP_NAME": "My App",
   "APP_KEY": "base64:...",
   "APP_ENV": "production",
-  "DB_CONNECTION": "pgsql",
-  "DB_HOST": "your-rds-endpoint",
-  "DB_DATABASE": "your_database",
-  "DB_USERNAME": "your_username",
-  "DB_PASSWORD": "your_password",
   "ASSET_URL": "https://your-s3-bucket.s3.amazonaws.com"
 }
 ```
 
-> `ASSET_URL` must point to the S3 bucket URL where static assets are hosted, since Lambda cannot serve static files directly.
+> `ASSET_URL` must point to the S3 bucket URL where static assets are hosted, since Lambda cannot serve static files directly. Database variables (`DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`) are automatically injected by Terraform when `dsql_cluster_identifier` is configured.
 
 ### 3. Create Terraform Configuration Files
 
@@ -147,14 +142,9 @@ Create `terraform.tfvars`:
 ```hcl
 app_name = "my-laravel-app"
 
-# VPC settings (enable if you need access to RDS or other VPC resources)
-enable_vpc         = true
-subnet_ids         = ["subnet-xxx", "subnet-yyy"]
-security_group_ids = ["sg-xxx"]
-
-# EFS settings (enable if you need a persistent filesystem)
-enable_filesystem = true
-access_point_arn  = "arn:aws:elasticfilesystem:us-west-2:123456789:access-point/fsap-xxx"
+# Aurora DSQL settings (optional — leave empty to manage DB env vars manually)
+dsql_cluster_identifier = "abcde1f234ghijklmnop5qr6st"
+dsql_username           = "admin"
 
 # API Gateway — uses a TLS certificate from AWS ACM
 certificate_arn    = "arn:aws:acm:us-west-2:123456789:certificate/xxx-xxx"
@@ -243,11 +233,7 @@ jobs:
       certificate_arn: ${{ vars.NEW_APP_CERTIFICATE_ARN }}
       aws_bucket: ${{ vars.NEW_APP_AWS_BUCKET }}
       asset_bucket: ${{ vars.NEW_APP_ASSET_AWS_BUCKET }} # Optional: skip if no static sync
-      enable_vpc: true
-      subnet_ids: ${{ vars.NEW_APP_SUBNET_IDS }}
-      security_group_ids: ${{ vars.NEW_APP_SECURITY_GROUP_IDS }}
-      enable_filesystem: true
-      access_point_arn: ${{ vars.NEW_APP_ACCESS_POINT_ARN }}
+      dsql_cluster_identifier: ${{ vars.NEW_APP_DSQL_CLUSTER_IDENTIFIER }}
       extra_artisan_pre_build: "" # Optional extra commands, e.g. "php artisan migrate --force"
       ssm_parameter_name: "/your-app/env" # AWS SSM Parameter Store path containing JSON env vars
 ```
@@ -257,9 +243,16 @@ jobs:
 To tear down and destroy all AWS resources for a specific application without manual CLI steps, trigger the corresponding `destroy-<app>.yaml` workflow via GitHub Actions:
 - `destroy-blog.yaml`
 - `destroy-cms.yaml`
-- `destroy-ai-agent.yaml`
 
 These workflows use the reusable template `_destroy-laravel-template.yaml` to run `terraform destroy -auto-approve` against the designated state file.
+
+## Amazon Aurora DSQL Setup
+
+Aurora DSQL is managed in its own standalone Terraform project (`../dsql`) so multiple applications (such as Blog and CMS) can share the same cluster independently of each app's lifecycle.
+
+1. **Provision the cluster** from `../dsql` (`terraform init && terraform apply`).
+2. **Pass the cluster identifier** to each Laravel app via `dsql_cluster_identifier` (e.g., `BLOG_DSQL_CLUSTER_IDENTIFIER` / `CMS_DSQL_CLUSTER_IDENTIFIER` repository variables). Terraform automatically derives the endpoint (`<id>.dsql.<region>.on.aws`), injects `DB_*` environment variables, and grants least-privilege `dsql:DbConnectAdmin` / `dsql:DbConnect` IAM permissions scoped to that cluster ARN.
+3. **Configure Laravel** with [`bref/laravel-dsql`](https://bref.sh/docs/environment/database-dsql) (`composer require bref/laravel-dsql`) so Laravel authenticates via AWS IAM tokens without static passwords.
 
 ## Environment Variables
 
@@ -285,12 +278,17 @@ The following environment variables are automatically injected by Terraform into
 
 | Variable                           | Description                                    | Lambda |
 | ---------------------------------- | ---------------------------------------------- | ------ |
-| `DYNAMODB_CACHE_TABLE`             | DynamoDB cache table name                      | All    |
-| `SQS_QUEUE`                        | SQS queue URL                                  | All    |
-| `BREF_LOOP_MAX`                    | Max requests per instance before restart (250) | Web    |
-| `OCTANE_PERSIST_DATABASE_SESSIONS` | Persist database connections across requests   | Web    |
-| `LOG_CHANNEL`                      | Log channel (stderr)                           | All    |
-| `LOG_STDERR_FORMATTER`             | CloudWatch-compatible log formatter            | All    |
+| `DYNAMODB_CACHE_TABLE`             | DynamoDB cache table name                                    | All    |
+| `SQS_QUEUE`                        | SQS queue URL                                                | All    |
+| `DB_CONNECTION`                    | Set to `dsql` when `dsql_cluster_identifier` is set          | All    |
+| `DB_HOST`                          | Aurora DSQL cluster endpoint (`<id>.dsql.<region>.on.aws`)   | All    |
+| `DB_PORT`                          | PostgreSQL port (`5432`)                                     | All    |
+| `DB_DATABASE`                      | Default Aurora DSQL database (`postgres`)                    | All    |
+| `DB_USERNAME`                      | Aurora DSQL role (`admin` by default)                        | All    |
+| `BREF_LOOP_MAX`                    | Max requests per instance before restart (250)               | Web    |
+| `OCTANE_PERSIST_DATABASE_SESSIONS` | Persist database connections across requests                 | Web    |
+| `LOG_CHANNEL`                      | Log channel (stderr)                                         | All    |
+| `LOG_STDERR_FORMATTER`             | CloudWatch-compatible log formatter                          | All    |
 
 Application environment variables are managed securely via AWS SSM Parameter Store:
 - **AWS SSM Parameter Store (`ssm_parameter_name`)**: Pass the SSM parameter path (e.g. `/docfunc/env`). Terraform natively fetches and decodes the JSON values at plan/apply time via `data "aws_ssm_parameter"`.
@@ -300,7 +298,7 @@ Application environment variables are managed securely via AWS SSM Parameter Sto
 - **API Gateway timeout**: Max 30 seconds. Web Lambda timeout is set to 28s to allow a 2-second buffer.
 - **Cold starts**: The first invocation after idle time will have additional latency. Consider Provisioned Concurrency for latency-sensitive workloads.
 - **Static assets**: Lambda cannot serve static files. Upload frontend assets to S3 and set `ASSET_URL` accordingly.
-- **Filesystem**: Lambda is read-only (except `/tmp`, max 10 GB). Enable EFS for persistent storage.
+- **Aurora DSQL**: No VPC or NAT Gateway is required; connections use TLS and short-lived IAM auth tokens.
 - **SQS retries**: Messages are retried 3 times before moving to the Dead Letter Queue. DLQ retains messages for 14 days.
 - **ACM certificate region**: The certificate must be in the same region as API Gateway v2.
 - **Resource naming**: Names include a 6-character random suffix to avoid conflicts across environments.

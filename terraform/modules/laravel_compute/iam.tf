@@ -23,10 +23,6 @@ resource "aws_iam_role" "lambda_execution" {
   })
 }
 
-data "aws_iam_policy" "aws_lambda_vpc_access_execution_role" {
-  arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
-
 locals {
   lambda_function_log_group_arn_wildcard = join(":", [
     "arn",
@@ -124,6 +120,27 @@ data "aws_iam_policy_document" "lambda_execution" {
 
     effect = "Allow"
   }
+
+  dynamic "statement" {
+    for_each = var.dsql_cluster_arn != "" ? [1] : []
+
+    content {
+      sid = "AllowDSQLAccess"
+
+      actions = var.dsql_username == "admin" ? [
+        "dsql:DbConnectAdmin",
+        "dsql:DbConnect"
+        ] : [
+        "dsql:DbConnect"
+      ]
+
+      resources = [
+        var.dsql_cluster_arn
+      ]
+
+      effect = "Allow"
+    }
+  }
 }
 
 resource "aws_iam_policy" "lambda_execution" {
@@ -134,11 +151,4 @@ resource "aws_iam_policy" "lambda_execution" {
 resource "aws_iam_role_policy_attachment" "lambda_execution" {
   role       = aws_iam_role.lambda_execution.name
   policy_arn = aws_iam_policy.lambda_execution.arn
-}
-
-resource "aws_iam_role_policy_attachment" "aws_lambda_vpc_access_execution" {
-  count = var.enable_vpc ? 1 : 0
-
-  role       = aws_iam_role.lambda_execution.name
-  policy_arn = data.aws_iam_policy.aws_lambda_vpc_access_execution_role.arn
 }

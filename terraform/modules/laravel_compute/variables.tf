@@ -33,34 +33,22 @@ variable "lambda_memory_size" {
   default     = 1024
 }
 
-variable "enable_vpc" {
-  description = "Whether to attach Lambda functions to a VPC"
-  type        = bool
-  default     = false
-}
-
-variable "subnet_ids" {
-  description = "List of subnet IDs for Lambda VPC configuration"
-  type        = list(string)
-  default     = []
-}
-
-variable "security_group_ids" {
-  description = "List of security group IDs for Lambda VPC configuration"
-  type        = list(string)
-  default     = []
-}
-
-variable "enable_filesystem" {
-  description = "Whether to mount an EFS filesystem to Lambda functions"
-  type        = bool
-  default     = false
-}
-
-variable "access_point_arn" {
-  description = "ARN of the EFS access point"
+variable "dsql_cluster_endpoint" {
+  description = "PostgreSQL-compatible endpoint of the Amazon Aurora DSQL cluster (leave empty to skip DSQL env injection)"
   type        = string
   default     = ""
+}
+
+variable "dsql_cluster_arn" {
+  description = "ARN of the Amazon Aurora DSQL cluster (leave empty to skip DSQL IAM permissions)"
+  type        = string
+  default     = ""
+}
+
+variable "dsql_username" {
+  description = "Database username for Amazon Aurora DSQL"
+  type        = string
+  default     = "admin"
 }
 
 variable "log_retention_in_days" {

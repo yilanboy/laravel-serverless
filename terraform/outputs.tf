@@ -37,3 +37,8 @@ output "jobs_dlq_url" {
   description = "URL of the jobs SQS dead letter queue"
   value       = module.queue.jobs_dlq_url
 }
+
+output "dsql_cluster_endpoint" {
+  description = "PostgreSQL-compatible endpoint of the configured Amazon Aurora DSQL cluster"
+  value       = local.dsql_cluster_endpoint
+}

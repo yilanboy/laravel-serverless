@@ -2,6 +2,9 @@ locals {
   app_name = lower(replace(var.app_name, "/[^A-Za-z0-9]/", "-"))
 
   resolved_laravel_env_vars = var.ssm_parameter_name != "" ? jsondecode(data.aws_ssm_parameter.env[0].value) : {}
+
+  dsql_cluster_endpoint = var.dsql_cluster_identifier != "" ? "${var.dsql_cluster_identifier}.dsql.${data.aws_region.current.region}.on.aws" : ""
+  dsql_cluster_arn      = var.dsql_cluster_identifier != "" ? "arn:${data.aws_partition.current.partition}:dsql:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.dsql_cluster_identifier}" : ""
 }
 
 resource "random_string" "resource_suffix" {
@@ -33,12 +36,9 @@ module "compute" {
   lambda_memory_size      = var.lambda_memory_size
   log_retention_in_days   = var.log_retention_in_days
 
-  enable_vpc         = var.enable_vpc
-  subnet_ids         = var.subnet_ids
-  security_group_ids = var.security_group_ids
-
-  enable_filesystem = var.enable_filesystem
-  access_point_arn  = var.access_point_arn
+  dsql_cluster_endpoint = local.dsql_cluster_endpoint
+  dsql_cluster_arn      = local.dsql_cluster_arn
+  dsql_username         = var.dsql_username
 
   dynamodb_table_name = module.cache.table_name
   dynamodb_table_arn  = module.cache.table_arn

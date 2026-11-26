@@ -1,3 +1,26 @@
+locals {
+  dsql_env_vars = var.dsql_cluster_endpoint != "" ? {
+    DB_CONNECTION = "dsql"
+    DB_HOST       = var.dsql_cluster_endpoint
+    DB_PORT       = "5432"
+    DB_DATABASE   = "postgres"
+    DB_USERNAME   = var.dsql_username
+  } : {}
+
+  common_env_vars = merge(
+    var.laravel_env_vars,
+    {
+      LOG_CHANNEL          = "stderr"
+      LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
+      CACHE_STORE          = "dynamodb"
+      DYNAMODB_CACHE_TABLE = var.dynamodb_table_name
+      QUEUE_CONNECTION     = "sqs"
+      SQS_QUEUE            = var.sqs_queue_url
+    },
+    local.dsql_env_vars
+  )
+}
+
 resource "aws_lambda_function" "web" {
   filename         = var.filename
   source_code_hash = fileexists(var.filename) ? filesha256(var.filename) : null
@@ -12,36 +35,13 @@ resource "aws_lambda_function" "web" {
 
   environment {
     variables = merge(
-      var.laravel_env_vars,
+      local.common_env_vars,
       {
         BREF_RUNTIME                     = "Bref\\FunctionRuntime\\Main"
         BREF_LOOP_MAX                    = "250"
         OCTANE_PERSIST_DATABASE_SESSIONS = "1"
-        LOG_CHANNEL                      = "stderr"
-        LOG_STDERR_FORMATTER             = "Bref\\Monolog\\CloudWatchFormatter"
-        CACHE_STORE                      = "dynamodb"
-        DYNAMODB_CACHE_TABLE             = var.dynamodb_table_name
-        QUEUE_CONNECTION                 = "sqs"
-        SQS_QUEUE                        = var.sqs_queue_url
       }
     )
-  }
-
-  dynamic "vpc_config" {
-    for_each = var.enable_vpc ? ["apply"] : []
-    content {
-      subnet_ids                  = var.subnet_ids
-      security_group_ids          = var.security_group_ids
-      ipv6_allowed_for_dual_stack = true
-    }
-  }
-
-  dynamic "file_system_config" {
-    for_each = var.enable_filesystem ? ["apply"] : []
-    content {
-      arn              = var.access_point_arn
-      local_mount_path = "/mnt/efs"
-    }
   }
 }
 
@@ -59,34 +59,11 @@ resource "aws_lambda_function" "artisan" {
 
   environment {
     variables = merge(
-      var.laravel_env_vars,
+      local.common_env_vars,
       {
-        BREF_RUNTIME         = "Bref\\ConsoleRuntime\\Main"
-        LOG_CHANNEL          = "stderr"
-        LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
-        CACHE_STORE          = "dynamodb"
-        DYNAMODB_CACHE_TABLE = var.dynamodb_table_name
-        QUEUE_CONNECTION     = "sqs"
-        SQS_QUEUE            = var.sqs_queue_url
+        BREF_RUNTIME = "Bref\\ConsoleRuntime\\Main"
       }
     )
-  }
-
-  dynamic "vpc_config" {
-    for_each = var.enable_vpc ? ["apply"] : []
-    content {
-      subnet_ids                  = var.subnet_ids
-      security_group_ids          = var.security_group_ids
-      ipv6_allowed_for_dual_stack = true
-    }
-  }
-
-  dynamic "file_system_config" {
-    for_each = var.enable_filesystem ? ["apply"] : []
-    content {
-      arn              = var.access_point_arn
-      local_mount_path = "/mnt/efs"
-    }
   }
 }
 
@@ -104,34 +81,11 @@ resource "aws_lambda_function" "jobs_worker" {
 
   environment {
     variables = merge(
-      var.laravel_env_vars,
+      local.common_env_vars,
       {
-        BREF_RUNTIME         = "Bref\\FunctionRuntime\\Main"
-        LOG_CHANNEL          = "stderr"
-        LOG_STDERR_FORMATTER = "Bref\\Monolog\\CloudWatchFormatter"
-        CACHE_STORE          = "dynamodb"
-        DYNAMODB_CACHE_TABLE = var.dynamodb_table_name
-        QUEUE_CONNECTION     = "sqs"
-        SQS_QUEUE            = var.sqs_queue_url
+        BREF_RUNTIME = "Bref\\FunctionRuntime\\Main"
       }
     )
-  }
-
-  dynamic "vpc_config" {
-    for_each = var.enable_vpc ? ["apply"] : []
-    content {
-      subnet_ids                  = var.subnet_ids
-      security_group_ids          = var.security_group_ids
-      ipv6_allowed_for_dual_stack = true
-    }
-  }
-
-  dynamic "file_system_config" {
-    for_each = var.enable_filesystem ? ["apply"] : []
-    content {
-      arn              = var.access_point_arn
-      local_mount_path = "/mnt/efs"
-    }
   }
 }
 
